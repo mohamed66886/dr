@@ -1,0 +1,424 @@
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { FaTooth, FaTeeth, FaTeethOpen, FaClinicMedical, FaSmile } from 'react-icons/fa';
+import { GiToothbrush, GiTooth } from 'react-icons/gi';
+import { MdMedicalServices, MdHealthAndSafety } from 'react-icons/md';
+
+const Home = () => {
+  const services = [
+    {
+      icon: <FaTeeth className="text-4xl text-dental-blue" />,
+      title: 'تبييض الأسنان',
+      description: 'احصل على ابتسامة بيضاء ومشرقة باستخدام أحدث تقنيات التبييض الآمنة'
+    },
+    {
+      icon: <GiTooth className="text-4xl text-dental-blue" />,
+      title: 'زراعة الأسنان',
+      description: 'حلول متقدمة لاستبدال الأسنان المفقودة بزراعات عالية الجودة'
+    },
+    {
+      icon: <FaTeethOpen className="text-4xl text-dental-blue" />,
+      title: 'تقويم الأسنان',
+      description: 'تقويم الأسنان بأحدث التقنيات للحصول على ابتسامة مثالية ومنتظمة'
+    }
+  ];
+
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  return (
+    <div className="bg-white overflow-hidden">
+      {/* Hero Section */}
+      <section 
+        className="relative text-white py-32 overflow-hidden"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(14, 165, 233, 0.85), rgba(14, 165, 233, 0.85)), url("/images/dental-hero.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* أسنان متحركة في الخلفية */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          {[...Array(7)].map((_, i) => (
+            <motion.span
+              key={i}
+              className="absolute"
+              style={{
+                left: `${10 + i * 12}%`,
+                top: `${15 + (i % 2 === 0 ? 0 : 10)}%`,
+                filter: 'blur(2px)', // تم تخفيف البلور من 4px إلى 2px
+                opacity: 0.18 + (i % 2) * 0.07,
+              }}
+              animate={{
+                y: [0, 30, 0],
+                scale: [1, 1.15, 1],
+                rotate: [0, i % 2 === 0 ? 10 : -10, 0]
+              }}
+              transition={{
+                duration: 7 + i,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.7
+              }}
+            >
+              <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M27 4C34.1797 4 40 9.8203 40 17C40 24.1797 34.1797 30 27 30C19.8203 30 14 24.1797 14 17C14 9.8203 19.8203 4 27 4Z" fill="#fff" fillOpacity="0.7"/>
+                <ellipse cx="27" cy="40" rx="10" ry="12" fill="#fff" fillOpacity="0.5"/>
+              </svg>
+            </motion.span>
+          ))}
+        </div>
+        <div className="absolute inset-0 bg-black/20 z-10 backdrop-blur-sm"></div>
+        <div className="container mx-auto px-4 text-center relative z-20">
+          <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="max-w-4xl mx-auto"
+          >
+            <motion.h1 
+              variants={fadeIn}
+              className="relative text-5xl md:text-6xl font-black mb-6 leading-tight drop-shadow-xl font-display tracking-tight bg-gradient-to-r from-white via-sky-200 to-dental-blue bg-clip-text text-transparent [text-shadow:0_2px_16px_rgba(14,165,233,0.18)]"
+              style={{ fontFamily: 'Cairo, Tajawal, "Noto Kufi Arabic", "Segoe UI", Arial, sans-serif', letterSpacing: '0.01em' }}
+            >
+              {/* أسنان متحركة حول العنوان */}
+              <span className="pointer-events-none select-none">
+                {/* أعلى يمين */}
+                <motion.span
+                  className="hidden md:block absolute -top-8 -right-8 z-20"
+                  initial={{ y: -10, x: 10, rotate: 0 }}
+                  animate={{ y: [0, -10, 0], x: [0, 10, 0], rotate: [0, 15, 0] }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: 0 }}
+                >
+                  <svg width="38" height="38" viewBox="0 0 54 54" fill="none"><path d="M27 4C34.1797 4 40 9.8203 40 17C40 24.1797 34.1797 30 27 30C19.8203 30 14 24.1797 14 17C14 9.8203 19.8203 4 27 4Z" fill="#fff" fillOpacity="0.9"/><ellipse cx="27" cy="40" rx="10" ry="12" fill="#bae6fd" fillOpacity="0.7"/></svg>
+                </motion.span>
+                {/* أعلى يسار */}
+                <motion.span
+                  className="hidden md:block absolute -top-8 -left-8 z-20"
+                  initial={{ y: -10, x: -10, rotate: 0 }}
+                  animate={{ y: [0, -10, 0], x: [0, -10, 0], rotate: [0, -15, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
+                >
+                  <svg width="32" height="32" viewBox="0 0 54 54" fill="none"><path d="M27 4C34.1797 4 40 9.8203 40 17C40 24.1797 34.1797 30 27 30C19.8203 30 14 24.1797 14 17C14 9.8203 19.8203 4 27 4Z" fill="#fff" fillOpacity="0.8"/><ellipse cx="27" cy="40" rx="9" ry="10" fill="#bae6fd" fillOpacity="0.6"/></svg>
+                </motion.span>
+                {/* أسفل يمين */}
+                <motion.span
+                  className="hidden md:block absolute -bottom-8 -right-6 z-20"
+                  initial={{ y: 10, x: 10, rotate: 0 }}
+                  animate={{ y: [0, 10, 0], x: [0, 8, 0], rotate: [0, -10, 0] }}
+                  transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 54 54" fill="none"><path d="M27 4C34.1797 4 40 9.8203 40 17C40 24.1797 34.1797 30 27 30C19.8203 30 14 24.1797 14 17C14 9.8203 19.8203 4 27 4Z" fill="#fff" fillOpacity="0.7"/><ellipse cx="27" cy="40" rx="8" ry="9" fill="#bae6fd" fillOpacity="0.5"/></svg>
+                </motion.span>
+                {/* أسفل يسار */}
+                <motion.span
+                  className="hidden md:block absolute -bottom-8 -left-6 z-20"
+                  initial={{ y: 10, x: -10, rotate: 0 }}
+                  animate={{ y: [0, 10, 0], x: [0, -8, 0], rotate: [0, 10, 0] }}
+                  transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut', delay: 1.7 }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 54 54" fill="none"><path d="M27 4C34.1797 4 40 9.8203 40 17C40 24.1797 34.1797 30 27 30C19.8203 30 14 24.1797 14 17C14 9.8203 19.8203 4 27 4Z" fill="#fff" fillOpacity="0.7"/><ellipse cx="27" cy="40" rx="7" ry="8" fill="#bae6fd" fillOpacity="0.4"/></svg>
+                </motion.span>
+                {/* موبايل: سن واحدة أعلى العنوان */}
+                <motion.span
+                  className="block md:hidden absolute -top-7 left-1/2 -translate-x-1/2 z-20"
+                  initial={{ y: -8, rotate: 0 }}
+                  animate={{ y: [0, -8, 0], rotate: [0, 10, 0] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 54 54" fill="none"><path d="M27 4C34.1797 4 40 9.8203 40 17C40 24.1797 34.1797 30 27 30C19.8203 30 14 24.1797 14 17C14 9.8203 19.8203 4 27 4Z" fill="#fff" fillOpacity="0.8"/><ellipse cx="27" cy="40" rx="8" ry="9" fill="#bae6fd" fillOpacity="0.5"/></svg>
+                </motion.span>
+              </span>
+              <svg width="100%" height="1.2em" viewBox="0 0 600 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline', verticalAlign: 'middle' }}>
+                <defs>
+                  <linearGradient id="paint0_linear" x1="0" y1="0" x2="600" y2="90" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#fff"/>
+                    <stop offset="0.5" stopColor="#bae6fd"/>
+                    <stop offset="1" stopColor="#38bdf8"/>
+                  </linearGradient>
+                  <filter id="shadow" x="-10" y="-10" width="620" height="110" filterUnits="userSpaceOnUse">
+                    <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#38bdf8" flood-opacity="0.18"/>
+                  </filter>
+                </defs>
+                <text x="50%" y="60" text-anchor="middle" font-family="Cairo, Tajawal, 'Noto Kufi Arabic', 'Segoe UI', Arial, sans-serif" font-size="64" font-weight="900" fill="url(#paint0_linear)" filter="url(#shadow)">ابتسامتك سر ثقتك</text>
+              </svg>
+            </motion.h1>
+            <motion.p 
+              variants={fadeIn}
+              className="text-xl md:text-2xl mb-8 opacity-90 drop-shadow-lg"
+            >
+              مع د. محمد رشاد احصل على الابتسامة التي تحلم بها
+
+            </motion.p>
+            <motion.div 
+              variants={fadeIn}
+              className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse w-full max-w-xl mx-auto"
+            >
+              <Link to="/appointment" className="w-full md:w-auto">
+                <Button className="w-full md:w-auto bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 text-white hover:from-sky-400 hover:to-dental-blue px-10 py-8 text-xl font-semibold rounded-full shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-4 group justify-center">
+                  <svg className="w-7 h-7 text-white group-hover:animate-bounce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 15.487A9.001 9.001 0 013 12c0-4.97 4.03-9 9-9s9 4.03 9 9a9.001 9.001 0 01-6.862 8.487M15 19v2m-6-2v2" /></svg>
+                  احجز موعدك الآن
+                </Button>
+              </Link>
+              <Link to="/services" className="w-full md:w-auto">
+                <Button 
+                  variant="outline" 
+                  className="w-full md:w-auto border-2 border-dental-blue text-dental-blue hover:bg-dental-blue hover:text-white px-10 py-8 text-xl font-semibold rounded-full flex items-center gap-4 transition-all duration-200 group justify-center"
+                >
+                  <svg className="w-7 h-7 text-dental-blue group-hover:text-white transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h4m0 0V7m0 4l-4-4m4 4l4-4" /></svg>
+                  تعرف على خدماتنا
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Doctor Bio Section */}
+      <section className="py-24 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="relative w-full max-w-md mx-auto flex justify-center items-center">
+                <motion.div
+                  initial={{ scale: 0.92, boxShadow: '0 0 0 0 #38bdf8' }}
+                  animate={{ scale: [0.92, 1.04, 0.98, 1], boxShadow: [
+                    '0 0 0 0 #38bdf8',
+                    '0 0 0 12px #bae6fd44',
+                    '0 0 0 6px #38bdf822',
+                    '0 0 0 0 #38bdf800',
+                    '0 0 0 0 #38bdf8'
+                  ] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+                  className="rounded-full overflow-hidden shadow-2xl border-4 border-white"
+                  style={{ width: '260px', height: '260px', minWidth: '180px', minHeight: '180px', background: 'white' }}
+                >
+                  <img 
+                    src="/uu.png" 
+                    alt="د. محمد رشاد"
+                    className="w-full h-full object-cover rounded-full animate-fadeInUp"
+                    style={{ animationDuration: '1.2s' }}
+                  />
+                </motion.div>
+                {/* نجوم متحركة حول الصورة */}
+                {[...Array(6)].map((_, i) => (
+                  <motion.span
+                    key={i}
+                    className="absolute"
+                    style={{
+                      left: `${18 + i * 12}%`,
+                      top: `${i % 2 === 0 ? 10 : 85}%`,
+                      zIndex: 2
+                    }}
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: [0, 1, 0], scale: [0.7, 1.2, 0.7] }}
+                    transition={{ duration: 2.2 + i * 0.3, repeat: Infinity, delay: i * 0.5 }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="2" fill="#bae6fd"/>
+                      <circle cx="8" cy="8" r="4" stroke="#38bdf8" strokeWidth="1" opacity="0.5"/>
+                    </svg>
+                  </motion.span>
+                ))}
+              </div>
+              <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                <FaSmile className="text-4xl text-dental-blue" />
+              </div>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-4xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+                <span className="relative inline-block">
+                  <span className="bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg" style={{fontFamily: 'Cairo, Tajawal, "Noto Kufi Arabic", Arial, sans-serif', letterSpacing: '0.01em'}}>د. محمد رشاد</span>
+                </span>
+                <motion.span
+                  initial={{ y: 0 }}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="inline-block"
+                >
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="19" cy="19" rx="15" ry="15" fill="#f9fafb" stroke="#38bdf8" strokeWidth="2"/>
+                    <path d="M19 10C21.5 10 23.5 12.5 23.5 15.5C23.5 18.5 21.5 21 19 21C16.5 21 14.5 18.5 14.5 15.5C14.5 12.5 16.5 10 19 10Z" fill="#38bdf8"/>
+                    <ellipse cx="19" cy="28" rx="6" ry="2.5" fill="#bae6fd"/>
+                  </svg>
+                </motion.span>
+              </h2>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                طبيب أسنان متخصص مع أكثر من 15 عامًا من الخبرة في مجال طب الأسنان التجميلي والعلاجي. 
+                حاصل على شهادات عالمية في زراعة الأسنان وتقويم الأسنان من أفضل الجامعات الأوروبية والأمريكية.
+              </p>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                نؤمن بأن كل مريض يستحق أفضل رعاية طبية، ولذلك نستخدم أحدث التقنيات والمعدات 
+                الطبية لضمان حصولك على أفضل النتائج في بيئة مريحة وآمنة.
+              </p>
+              <div className="grid grid-cols-2 gap-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.7, type: 'spring', bounce: 0.4 }}
+                  viewport={{ once: true }}
+                  className="relative bg-gradient-to-br from-white via-blue-50 to-cyan-50 p-6 rounded-2xl shadow-xl text-center border border-blue-100 overflow-hidden group hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                >
+                  <div className="absolute -top-4 -left-4 w-16 h-16 bg-gradient-to-tr from-dental-blue/20 to-cyan-400/10 rounded-full blur-2xl group-hover:blur-md transition-all duration-300"></div>
+                  <h3 className="text-4xl font-extrabold text-dental-blue drop-shadow-lg animate-pulse">15+</h3>
+                  <p className="text-gray-600 mt-2 font-medium tracking-wide">سنة خبرة</p>
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: [0.8, 1.1, 0.95, 1], opacity: [0.5, 1, 0.7, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute bottom-2 right-2"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                      <circle cx="11" cy="11" r="4" fill="#bae6fd"/>
+                      <circle cx="11" cy="11" r="8" stroke="#38bdf8" strokeWidth="1.5" opacity="0.4"/>
+                    </svg>
+                  </motion.div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.7, delay: 0.2, type: 'spring', bounce: 0.4 }}
+                  viewport={{ once: true }}
+                  className="relative bg-gradient-to-br from-white via-blue-50 to-cyan-50 p-6 rounded-2xl shadow-xl text-center border border-blue-100 overflow-hidden group hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                >
+                  <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-tr from-cyan-400/20 to-dental-blue/10 rounded-full blur-2xl group-hover:blur-md transition-all duration-300"></div>
+                  <h3 className="text-4xl font-extrabold text-dental-blue drop-shadow-lg animate-pulse">5000+</h3>
+                  <p className="text-gray-600 mt-2 font-medium tracking-wide">مريض سعيد</p>
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: [0.8, 1.1, 0.95, 1], opacity: [0.5, 1, 0.7, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute bottom-2 left-2"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                      <circle cx="11" cy="11" r="4" fill="#bae6fd"/>
+                      <circle cx="11" cy="11" r="8" stroke="#38bdf8" strokeWidth="1.5" opacity="0.4"/>
+                    </svg>
+                  </motion.div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-24 bg-gradient-to-br from-white via-blue-50 to-cyan-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-64 h-64 bg-gradient-to-tr from-dental-blue/10 to-cyan-400/10 rounded-full blur-3xl -z-10 animate-pulse-slow" style={{filter:'blur(60px)', top:'-80px', left:'-80px'}}></div>
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-br from-cyan-400/10 to-dental-blue/10 rounded-full blur-3xl -z-10 animate-pulse-slow" style={{filter:'blur(60px)', bottom:'-80px', right:'-80px'}}></div>
+        <div className="container mx-auto px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 drop-shadow-lg mb-4 animate-gradient-x">خدماتنا المتميزة</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 mx-auto mb-6 rounded-full animate-pulse"></div>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto font-medium">نقدم مجموعة شاملة من خدمات طب الأسنان باستخدام أحدث التقنيات العالمية</p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {services.map((service, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, delay: index * 0.12, type: 'spring', bounce: 0.35 }}
+                viewport={{ once: true }}
+              >
+                <Card className="relative group bg-white/90 hover:bg-gradient-to-br from-dental-blue/10 to-cyan-400/10 border-0 shadow-xl hover:shadow-2xl rounded-2xl p-1 transition-all duration-300 overflow-hidden">
+                  <div className="absolute -top-6 -right-6 w-20 h-20 bg-gradient-to-tr from-dental-blue/10 to-cyan-400/10 rounded-full blur-2xl group-hover:blur-md transition-all duration-300"></div>
+                  <CardContent className="p-10 text-center flex flex-col items-center">
+                    <div className="bg-gradient-to-tr from-dental-blue/20 to-cyan-400/10 p-6 rounded-full mb-7 shadow-md animate-bounce-slow">
+                      {service.icon}
+                    </div>
+                    <h3 className="text-2xl font-bold text-dental-blue mb-3 drop-shadow-md group-hover:text-cyan-600 transition-all duration-200">
+                      {service.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed mb-7 font-medium">
+                      {service.description}
+                    </p>
+                    <Link to="/services" className="inline-block mt-auto px-6 py-2 rounded-full bg-dental-blue text-white font-semibold shadow-md hover:scale-105 transition-all duration-200">
+                      المزيد من التفاصيل
+                    </Link>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            viewport={{ once: true }}
+            className="text-center mt-16"
+          >
+            <Link to="/services">
+              <Button className="bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 hover:from-sky-400 hover:to-dental-blue text-white px-10 py-5 text-xl rounded-full shadow-xl hover:shadow-2xl transition-all font-bold animate-pulse">
+                اكتشف جميع خدماتنا
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-gradient-to-br from-dental-blue via-sky-400 to-cyan-400 text-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-tr from-white/10 to-cyan-400/10 rounded-full blur-3xl -z-10 animate-pulse-slow" style={{filter:'blur(60px)', top:'-90px', left:'-90px'}}></div>
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-cyan-400/10 to-white/10 rounded-full blur-3xl -z-10 animate-pulse-slow" style={{filter:'blur(60px)', bottom:'-100px', right:'-100px'}}></div>
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="max-w-2xl mx-auto"
+          >
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-200 to-dental-blue drop-shadow-lg animate-gradient-x">
+              هل أنت مستعد للحصول على ابتسامة أحلامك؟
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-white via-sky-200 to-dental-blue mx-auto mb-8 rounded-full animate-pulse"></div>
+            <p className="text-xl md:text-2xl mb-10 opacity-90 max-w-xl mx-auto font-medium">
+              احجز موعدك اليوم واحصل على استشارة مجانية مع د. محمد رشاد
+            </p>
+            <Link to="/appointment">
+              <Button className="bg-white text-dental-blue hover:bg-sky-100 px-10 py-5 text-xl font-bold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 mx-auto flex items-center gap-3">
+                <svg className="w-7 h-7 text-dental-blue" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 15.487A9.001 9.001 0 013 12c0-4.97 4.03-9 9-9s9 4.03 9 9a9.001 9.001 0 01-6.862 8.487M15 19v2m-6-2v2" /></svg>
+                احجز موعدك الآن
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;
