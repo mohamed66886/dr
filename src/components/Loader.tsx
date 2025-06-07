@@ -47,9 +47,10 @@ const DentalLoader: React.FC = () => (
         repeat: Infinity,
       }}
     >
-      جاري تحميل عيادة د. أحمد العليمي...
+      جاري تحميل عيادة د. محمد رشاد...
     </motion.p>
     
+
     {/* Subtle progress indicator */}
     <div className="w-40 h-1 mt-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
       <motion.div
