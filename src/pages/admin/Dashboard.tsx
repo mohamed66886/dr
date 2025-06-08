@@ -237,11 +237,12 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex w-full items-center justify-center h-screen">
+          
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-dental-blue border-t-transparent rounded-full"
+            className="w-full h-12 border-4 border-dental-blue border-t-transparent rounded-full"
           />
         </div>
       </AdminLayout>
@@ -250,17 +251,20 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="p-2 sm:p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+      <div
+        className="p-1 sm:p-3 md:p-8 w-full max-w-full mx-auto space-y-2 sm:space-y-6 md:space-y-8 overflow-x-hidden"
+        style={{ maxWidth: '400px', width: '100%' }}
+      >
         {/* Header with Search */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4"
+          className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-dental-blue">لوحة التحكم</h1>
-            <p className="text-gray-500 mt-1 text-sm sm:text-base">نظرة عامة على أداء العيادة</p>
+            <h1 className="text-base sm:text-2xl md:text-3xl font-bold text-dental-blue">لوحة التحكم</h1>
+            <p className="text-gray-500 mt-1 text-[11px] sm:text-base">نظرة عامة على أداء العيادة</p>
           </div>
           <div className="flex-1 flex justify-end w-full md:w-auto">
             <motion.div 
@@ -271,7 +275,7 @@ const AdminDashboard = () => {
                 placeholder="بحث في المستخدمين أو الحجوزات..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="pr-10 text-sm"
+                className="pr-10 text-[11px] sm:text-sm"
               />
               <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </motion.div>
@@ -279,7 +283,7 @@ const AdminDashboard = () => {
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -366,12 +370,12 @@ const AdminDashboard = () => {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="lg:col-span-2 bg-white rounded-xl shadow-md p-3 sm:p-6"
+            className="lg:col-span-2 bg-white rounded-xl shadow-md p-2 sm:p-3 md:p-6"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-800 flex items-center">
@@ -392,7 +396,7 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-white rounded-xl shadow-md p-3 sm:p-6"
+            className="bg-white rounded-xl shadow-md p-2 sm:p-3 md:p-6"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-800 flex items-center">
@@ -425,7 +429,7 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white rounded-xl shadow-md p-3 sm:p-6"
+          className="bg-white rounded-xl shadow-md p-2 sm:p-3 md:p-6"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-800 flex items-center">
@@ -457,11 +461,11 @@ const AdminDashboard = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="bg-white rounded-xl shadow-md overflow-x-auto"
         >
-          <div className="p-3 sm:p-6 border-b">
-            <h2 className="text-lg font-bold text-gray-800">آخر التعديلات</h2>
+          <div className="p-2 sm:p-3 md:p-6 border-b">
+            <h2 className="text-base sm:text-lg font-bold text-gray-800">آخر التعديلات</h2>
           </div>
           <div className="overflow-x-auto w-full">
-            <table className="min-w-[600px] sm:min-w-full divide-y divide-gray-200 text-sm">
+            <table className="min-w-[500px] sm:min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الاسم</th>
