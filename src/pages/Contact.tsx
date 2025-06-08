@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +25,22 @@ const Contact = () => {
     phone: '',
     subject: '',
     message: ''
+  });
+  const [clinicInfo, setClinicInfo] = useState({
+    phone: '01551290902',
+    altPhone: '01000000000',
+    email: 'info@dr-mohamedrashad.com',
+    altEmail: 'appointments@dr-mohamedrashad.com',
+    address1: 'شارع الملك فهد',
+    address2: 'دكرنس، الدقهلية',
+    workingHours: [
+      { day: 'السبت - الأربعاء', time: '9:00 ص - 9:00 م' },
+      { day: 'الخميس', time: '9:00 ص - 6:00 م' },
+      { day: 'الجمعة', time: 'مغلق' }
+    ],
+    facebook: '',
+    instagram: '',
+    twitter: ''
   });
 
   // Animations
@@ -83,6 +101,33 @@ const Contact = () => {
     }));
   };
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, 'config', 'clinicSettings');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setClinicInfo({
+            phone: data.phone || '',
+            altPhone: data.altPhone || '',
+            email: data.email || '',
+            altEmail: data.altEmail || '',
+            address1: data.address1 || '',
+            address2: data.address2 || data.address || '',
+            workingHours: Array.isArray(data.workingHours) ? data.workingHours : [],
+            facebook: data.facebook || '',
+            instagram: data.instagram || '',
+            twitter: data.twitter || ''
+          });
+        }
+      } catch (e) {
+        // يمكن إضافة لوج أو رسالة خطأ هنا إذا رغبت
+      }
+    };
+    fetchSettings();
+  }, []);
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -140,8 +185,8 @@ const Contact = () => {
                     <FaPhone className="inline-block" />
                   </motion.div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">اتصل بنا</h3>
-                  <p className="text-gray-600 mb-2">01551290902</p>
-                  <p className="text-gray-600">01000000000</p>
+                  <p className="text-gray-600 mb-2">{clinicInfo.phone}</p>
+                  {clinicInfo.altPhone && <p className="text-gray-600">{clinicInfo.altPhone}</p>}
                   <Button 
                     className="mt-4 bg-dental-blue hover:bg-dental-blue/90"
                     onClick={() => window.open('tel:01551290902')}
@@ -162,8 +207,8 @@ const Contact = () => {
                     <FaEnvelope className="inline-block" />
                   </motion.div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">راسلنا</h3>
-                  <p className="text-gray-600 mb-2">info@dr-mohamedrashad.com</p>
-                  <p className="text-gray-600">appointments@dr-mohamedrashad.com</p>
+                  <p className="text-gray-600 mb-2">{clinicInfo.email}</p>
+                  {clinicInfo.altEmail && <p className="text-gray-600">{clinicInfo.altEmail}</p>}
                   <Button 
                     className="mt-4 bg-dental-blue hover:bg-dental-blue/90"
                     onClick={() => window.open('mailto:info@dr-mohamedrashad.com')}
@@ -184,8 +229,8 @@ const Contact = () => {
                     <FaMapMarkerAlt className="inline-block" />
                   </motion.div>
                   <h3 className="text-xl font-bold text-gray-800 mb-2">زرنا</h3>
-                  <p className="text-gray-600 mb-2">شارع الملك فهد</p>
-                  <p className="text-gray-600">دكرنس، الدقهلية</p>
+                  <p className="text-gray-600 mb-2">{clinicInfo.address1}</p>
+                  <p className="text-gray-600">{clinicInfo.address2}</p>
                   <Button 
                     className="mt-4 bg-dental-blue hover:bg-dental-blue/90"
                     onClick={() => window.open('https://maps.google.com', '_blank')}
@@ -354,18 +399,12 @@ const Contact = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="font-medium text-gray-800">السبت - الأربعاء</span>
-                        <span className="text-dental-blue font-medium">9:00 ص - 9:00 م</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="font-medium text-gray-800">الخميس</span>
-                        <span className="text-dental-blue font-medium">9:00 ص - 6:00 م</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2">
-                        <span className="font-medium text-gray-800">الجمعة</span>
-                        <span className="text-red-500 font-medium">مغلق</span>
-                      </div>
+                      {clinicInfo.workingHours.map((h, idx) => (
+                        <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="font-medium text-gray-800">{h.day}</span>
+                          <span className={`font-medium ${h.time === 'مغلق' ? 'text-red-500' : 'text-dental-blue'}`}>{h.time}</span>
+                        </div>
+                      ))}
                     </div>
                     
                     <motion.div 
@@ -379,7 +418,7 @@ const Contact = () => {
                       <p className="text-gray-600 text-sm">متوفرة 24/7 للحالات الطارئة</p>
                       <p className="text-dental-blue font-medium mt-1 flex items-center">
                         <FaPhone className="ml-2" />
-                        01551290902
+                        {clinicInfo.phone}
                       </p>
                     </motion.div>
                   </CardContent>
@@ -398,25 +437,28 @@ const Contact = () => {
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4">
                       <motion.a 
-                        href="#" 
+                        href={clinicInfo.facebook ? (clinicInfo.facebook.startsWith('http') ? clinicInfo.facebook : `https://${clinicInfo.facebook}`) : '#'}
                         className="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                         whileHover={{ y: -5 }}
+                        target="_blank" rel="noopener noreferrer"
                       >
                         <FaFacebook className="text-blue-600 text-2xl mb-2" />
                         <span className="text-sm text-gray-600">فيسبوك</span>
                       </motion.a>
                       <motion.a 
-                        href="#" 
+                        href={clinicInfo.instagram ? (clinicInfo.instagram.startsWith('http') ? clinicInfo.instagram : `https://${clinicInfo.instagram}`) : '#'}
                         className="flex flex-col items-center p-4 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors"
                         whileHover={{ y: -5 }}
+                        target="_blank" rel="noopener noreferrer"
                       >
                         <FaInstagram className="text-pink-600 text-2xl mb-2" />
                         <span className="text-sm text-gray-600">إنستغرام</span>
                       </motion.a>
                       <motion.a 
-                        href="#" 
+                        href={clinicInfo.twitter ? (clinicInfo.twitter.startsWith('http') ? clinicInfo.twitter : `https://${clinicInfo.twitter}`) : '#'}
                         className="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                         whileHover={{ y: -5 }}
+                        target="_blank" rel="noopener noreferrer"
                       >
                         <FaTwitter className="text-blue-400 text-2xl mb-2" />
                         <span className="text-sm text-gray-600">تويتر</span>

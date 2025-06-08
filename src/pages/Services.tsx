@@ -1,4 +1,7 @@
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -29,57 +32,48 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
+// Helper to map icon name string to React element
+const iconMap: Record<string, JSX.Element> = {
+  FaTooth: <FaTooth className="text-3xl text-dental-blue" />,
+  FaTeeth: <FaTeeth className="text-3xl text-dental-blue" />,
+  FaTeethOpen: <FaTeethOpen className="text-3xl text-dental-blue" />,
+  MdOutlineCleaningServices: <MdOutlineCleaningServices className="text-3xl text-dental-blue" />,
+  MdToothbrush: <MdToothbrush className="text-3xl text-dental-blue" />,
+  MdOutlineScience: <MdOutlineScience className="text-3xl text-dental-blue" />,
+};
+
+// Service type for fetched data
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  icon: string;
+  features: string[];
+}
+
 const Services = () => {
-  const services = [
-    {
-      id: 1,
-      title: 'تبييض الأسنان',
-      description: 'احصل على ابتسامة بيضاء ومشرقة باستخدام أحدث تقنيات التبييض الآمنة والفعالة. نستخدم تقنيات متقدمة تضمن نتائج سريعة ودائمة.',
-      image: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=600',
-      features: ['تقنيات متقدمة', 'نتائج فورية', 'آمن وفعال', 'ضمان لمدة سنة'],
-      icon: <MdOutlineCleaningServices className="text-3xl text-dental-blue" />
-    },
-    {
-      id: 2,
-      title: 'تنظيف الأسنان',
-      description: 'تنظيف شامل ومتخصص للأسنان واللثة لإزالة الجير والبلاك والحفاظ على صحة الفم والأسنان بأحدث الأجهزة.',
-      image: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=600',
-      features: ['تنظيف عميق', 'إزالة الجير', 'وقاية من أمراض اللثة', 'فحص شامل'],
-      icon: <MdToothbrush className="text-3xl text-dental-blue" /> // بديل FaToothbrush
-    },
-    {
-      id: 3,
-      title: 'زراعة الأسنان',
-      description: 'حلول متقدمة لاستبدال الأسنان المفقودة بزراعات عالية الجودة من أفضل الشركات العالمية مع ضمان مدى الحياة.',
-      image: 'https://images.unsplash.com/photo-1609840114055-660dda1e4c0b?q=80&w=600',
-      features: ['زراعات عالمية', 'تقنية ثلاثية الأبعاد', 'ضمان مدى الحياة', 'نتائج طبيعية'],
-      icon: <FaTeethOpen className="text-3xl text-dental-blue" />
-    },
-    {
-      id: 4,
-      title: 'تقويم الأسنان',
-      description: 'تقويم الأسنان بأحدث التقنيات والأجهزة للحصول على ابتسامة مثالية ومنتظمة. نوفر خيارات متنوعة تناسب جميع الأعمار.',
-      image: 'https://images.unsplash.com/photo-1609840243107-6ba04449f2a8?q=80&w=600',
-      features: ['تقويم شفاف', 'تقويم معدني', 'متابعة دورية', 'خطة علاج مخصصة'],
-      icon: <FaTeeth className="text-3xl text-dental-blue" />
-    },
-    {
-      id: 5,
-      title: 'حشوات تجميلية',
-      description: 'حشوات الأسنان التجميلية بمواد عالية الجودة تحافظ على الشكل الطبيعي للأسنان وتدوم لسنوات طويلة.',
-      image: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=600',
-      features: ['مواد تجميلية', 'لون طبيعي', 'مقاومة للتآكل', 'تقنيات حديثة'],
-      icon: <MdOutlineScience className="text-3xl text-dental-blue" /> // بديل FaToothpaste
-    },
-    {
-      id: 6,
-      title: 'علاج الجذور',
-      description: 'علاج متخصص لجذور الأسنان باستخدام أحدث التقنيات المجهرية لإنقاذ الأسنان المتضررة والحفاظ عليها.',
-      image: 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?q=80&w=600',
-      features: ['تقنية مجهرية', 'علاج دقيق', 'إنقاذ الأسنان', 'تخدير متقدم'],
-      icon: <FaTooth className="text-3xl text-dental-blue" />
-    }
-  ];
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      const querySnapshot = await getDocs(collection(db, 'services'));
+      setServices(querySnapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          title: data.title || '',
+          description: data.description || '',
+          image: data.image || '',
+          icon: data.icon || '',
+          features: Array.isArray(data.features) ? data.features : [],
+        };
+      }));
+      setLoading(false);
+    };
+    fetchServices();
+  }, []);
 
   return (
     <div className="bg-white overflow-hidden">
@@ -113,6 +107,9 @@ const Services = () => {
       {/* Services Grid with Staggered Animation */}
       <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
+          {loading ? (
+            <div className="text-center py-10 text-dental-blue font-bold text-xl">جاري التحميل...</div>
+          ) : (
           <motion.div 
             variants={container}
             initial="hidden"
@@ -131,7 +128,7 @@ const Services = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-dental-blue/60 to-dental-blue/20"></div>
                     <div className="absolute top-4 right-4 bg-white p-3 rounded-full shadow-lg">
-                      {service.icon}
+                      {iconMap[service.icon] || <FaTooth className="text-3xl text-dental-blue" />}
                     </div>
                   </div>
                   <CardContent className="p-6 flex-grow">
@@ -141,11 +138,10 @@ const Services = () => {
                     <p className="text-gray-600 mb-4 leading-relaxed">
                       {service.description}
                     </p>
-                    
                     <div className="mb-4">
                       <h4 className="font-semibold text-gray-800 mb-2">مميزات الخدمة:</h4>
                       <ul className="space-y-2">
-                        {service.features.map((feature, index) => (
+                        {(service.features || []).map((feature: string, index: number) => (
                           <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
                             <span className="text-dental-blue mt-1">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -162,6 +158,7 @@ const Services = () => {
               </motion.div>
             ))}
           </motion.div>
+          )}
         </div>
       </section>
 

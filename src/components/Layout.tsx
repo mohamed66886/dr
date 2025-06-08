@@ -1,5 +1,5 @@
-
 import { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
@@ -9,12 +9,15 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+  const isAdminDashboard = location.pathname.startsWith('/admin');
   return (
     <div className="min-h-screen bg-white" dir="rtl">
-      <Header />
+      {!isLoginPage && !isAdminDashboard && <Header />}
       <main>{children}</main>
-      <Footer />
-      <WhatsAppButton />
+      {!isLoginPage && !isAdminDashboard && <Footer />}
+      {!isLoginPage && !isAdminDashboard && <WhatsAppButton />}
     </div>
   );
 };

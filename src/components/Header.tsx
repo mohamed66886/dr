@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTooth } from 'react-icons/fa';
@@ -8,6 +8,8 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const [logoClickCount, setLogoClickCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +18,13 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (logoClickCount === 5) {
+      navigate('/login');
+      setLogoClickCount(0);
+    }
+  }, [logoClickCount, navigate]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -88,7 +97,12 @@ const Header = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Link to="/" className="flex items-center space-x-2 space-x-reverse">
+            <Link to="/" className="flex items-center space-x-2 space-x-reverse"
+              onClick={e => {
+                setLogoClickCount(c => c + 1);
+                // allow normal navigation
+              }}
+            >
               <motion.div 
                 className="w-12 h-12 relative flex items-center justify-center"
                 whileHover={{ scale: 1.08, rotate: 6 }}

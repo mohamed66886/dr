@@ -3,8 +3,53 @@ import { motion } from 'framer-motion';
 import { FaTooth, FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebook, FaInstagram, FaTwitter, FaHome, FaUserMd, FaTeeth, FaCalendarAlt } from 'react-icons/fa';
 import { GiToothbrush, GiTooth } from 'react-icons/gi';
 import { FaTeethOpen } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 
 const Footer = () => {
+  const [clinic, setClinic] = useState({
+    clinicName: 'عيادة د. محمد رشاد لطب الأسنان',
+    phone: '01551290902',
+    email: 'Mohamed@gmail.com',
+    address: 'دكرنس، الدقهلية',
+    workingHours: [
+      { day: 'السبت - الأربعاء', time: '9:00 ص - 9:00 م' },
+      { day: 'الخميس', time: '9:00 ص - 6:00 م' },
+      { day: 'الجمعة', time: 'مغلق' }
+    ],
+    facebook: 'facebook.com/dentalclinic',
+    instagram: 'instagram.com/dentalclinic',
+    whatsapp: '01551290902',
+    about: 'عيادة متخصصة في طب الأسنان تقدم أفضل الخدمات العلاجية والتجميلية باستخدام أحدث التقنيات والمعدات الطبية.'
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, 'config', 'clinicSettings');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setClinic({
+            clinicName: data.clinicName || '',
+            phone: data.phone || '',
+            email: data.email || '',
+            address: data.address || '',
+            workingHours: Array.isArray(data.workingHours) ? data.workingHours : [],
+            facebook: data.facebook || '',
+            instagram: data.instagram || '',
+            whatsapp: data.whatsapp || '',
+            about: data.about || ''
+          });
+        }
+      } catch (e) {
+        // يمكن إضافة لوج أو رسالة خطأ هنا إذا رغبت
+      }
+    };
+    fetchSettings();
+  }, []);
+
   // Animations
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -40,12 +85,12 @@ const Footer = () => {
                 <FaTooth className="text-white text-xl" />
               </motion.div>
               <div>
-                <h3 className="text-lg font-bold">د. محمد رشاد</h3>
+                <h3 className="text-lg font-bold">{clinic.clinicName}</h3>
                 <p className="text-sm text-gray-300">طبيب الأسنان</p>
               </div>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
-              عيادة متخصصة في طب الأسنان تقدم أفضل الخدمات العلاجية والتجميلية باستخدام أحدث التقنيات والمعدات الطبية.
+              {clinic.about}
             </p>
             
             {/* Animated Tooth Icon */}
@@ -142,7 +187,7 @@ const Footer = () => {
                 <span className="bg-blue-500 p-2 rounded-full mr-2">
                   <FaPhone className="text-white" />
                 </span>
-                <span>01551290902</span>
+                <span>{clinic.phone}</span>
               </motion.p>
               <motion.p 
                 className="text-gray-300 flex items-center gap-2"
@@ -151,7 +196,7 @@ const Footer = () => {
                 <span className="bg-red-500 p-2 rounded-full mr-2">
                   <FaEnvelope className="text-white" />
                 </span>
-                <span>info@dr-ahmed.com</span>
+                <span>{clinic.email}</span>
               </motion.p>
               <motion.p 
                 className="text-gray-300 flex items-center gap-2"
@@ -160,7 +205,7 @@ const Footer = () => {
                 <span className="bg-green-500 p-2 rounded-full mr-2">
                   <FaMapMarkerAlt className="text-white" />
                 </span>
-                <span>دكرنس، الدقهلية</span>
+                <span>{clinic.address}</span>
               </motion.p>
             </div>
             
@@ -169,14 +214,14 @@ const Footer = () => {
               <h5 className="text-sm font-semibold mb-3">تابعنا على</h5>
               <div className="flex space-x-4 space-x-reverse">
                 <motion.a 
-                  href="#" 
+                  href={clinic.facebook} 
                   className="text-gray-300 hover:text-blue-400 transition-colors"
                   whileHover={{ y: -3 }}
                 >
                   <FaFacebook className="text-2xl" />
                 </motion.a>
                 <motion.a 
-                  href="#" 
+                  href={clinic.instagram} 
                   className="text-gray-300 hover:text-pink-500 transition-colors"
                   whileHover={{ y: -3 }}
                 >
@@ -199,14 +244,13 @@ const Footer = () => {
               className="text-gray-300 text-xs md:text-sm"
               whileHover={{ scale: 1.01 }}
             >
-              © 2024 د. محد رشاد. جميع الحقوق محفوظة.
-
+              © {new Date().getFullYear()} {clinic.clinicName}. جميع الحقوق محفوظة.
             </motion.p>
             <motion.p 
               className="text-gray-300 text-xs md:text-sm mt-2 md:mt-0"
               whileHover={{ scale: 1.01 }}
             >
-              ساعات العمل: السبت - الخميس، 9:00 ص - 9:00 م
+              ساعات العمل: {clinic.workingHours && clinic.workingHours.length > 0 ? clinic.workingHours.map((hour, index) => `${hour.day}: ${hour.time}${index < clinic.workingHours.length - 1 ? '، ' : ''}`).join('') : 'السبت - الخميس، 9:00 ص - 9:00 م'}
             </motion.p>
           </div>
         </div>
