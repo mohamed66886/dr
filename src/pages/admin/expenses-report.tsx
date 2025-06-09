@@ -25,6 +25,7 @@ type Expense = {
   description: string;
   amount: number;
   notes?: string;
+  expenseType?: string; // إضافة هذا الحقل لدعم الفلترة حسب نوع المصروف الرئيسي
 };
 
 const ExpensesReportPage = () => {
@@ -71,6 +72,7 @@ const ExpensesReportPage = () => {
             description: d.description || '',
             amount: typeof d.amount === 'number' ? d.amount : parseFloat(d.amount || '0'),
             notes: d.notes || '',
+            expenseType: d.expenseType || '', // إضافة هذا السطر لجلب نوع المصروف الرئيسي
           };
         });
         setExpenses(data);
@@ -85,7 +87,11 @@ const ExpensesReportPage = () => {
 
   useEffect(() => {
     let result = [...expenses];
-    if (type !== 'all') result = result.filter(e => e.type === type);
+    if (type === 'direct' || type === 'indirect') {
+      result = result.filter(e => (e.expenseType || '') === type);
+    } else if (type !== 'all') {
+      result = result.filter(e => e.type === type);
+    }
     if (dateFrom) result = result.filter(e => e.date >= dateFrom);
     if (dateTo) result = result.filter(e => e.date <= dateTo);
     
@@ -299,6 +305,13 @@ const ExpensesReportPage = () => {
           </motion.div>
         </motion.div>
 
+        {/* توضيح نوع الفلتر الحالي */}
+        {type !== 'all' && (
+          <div className="mb-4 text-right text-sm text-blue-700 font-bold">
+            عرض فقط المصروفات: {getExpenseTypeLabel(type)}
+          </div>
+        )}
+
         {/* جدول المصروفات */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -344,14 +357,19 @@ const ExpensesReportPage = () => {
                       <React.Fragment key={typeKey}>
                         <tr
                           className="bg-gray-50 cursor-pointer hover:bg-blue-50"
-                          onClick={() => handleToggleType(typeKey)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{idx + 1}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">{getExpenseTypeLabel(typeKey)}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">{exps.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} جنيه</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{exps.length}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <button className="text-dental-blue underline">
+                            <button
+                              className="text-dental-blue underline"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleToggleType(typeKey);
+                              }}
+                            >
                               {expandedTypes.includes(typeKey) ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
                             </button>
                           </td>

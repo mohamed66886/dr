@@ -62,6 +62,7 @@ const AdminDashboard = () => {
   const [chartData, setChartData] = useState<ChartDatum[]>([]);
   const [serviceStats, setServiceStats] = useState<ServiceStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [barChartFilter, setBarChartFilter] = useState('6months');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,13 +90,31 @@ const AdminDashboard = () => {
         let totalRevenue = 0;
         const updates: Update[] = [];
         const servicesMap = new Map<string, { count: number, revenue: number }>();
+        // Prepare months for the last 6 months, this year, and last year
         const monthsMap = new Map<string, { revenue: number, expenses: number }>();
         const now = new Date();
-        // Prepare months for the last 6 months
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
-          monthsMap.set(key, { revenue: 0, expenses: 0 });
+        let monthsRange: { key: string, name: string }[] = [];
+        if (barChartFilter === '6months') {
+          for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+            monthsMap.set(key, { revenue: 0, expenses: 0 });
+            monthsRange.push({ key, name: d.toLocaleString('ar-EG', { month: 'long' }) });
+          }
+        } else if (barChartFilter === 'year') {
+          for (let i = 0; i < 12; i++) {
+            const d = new Date(now.getFullYear(), i, 1);
+            const key = `${d.getFullYear()}-${i + 1}`;
+            monthsMap.set(key, { revenue: 0, expenses: 0 });
+            monthsRange.push({ key, name: d.toLocaleString('ar-EG', { month: 'long' }) });
+          }
+        } else if (barChartFilter === 'lastyear') {
+          for (let i = 0; i < 12; i++) {
+            const d = new Date(now.getFullYear() - 1, i, 1);
+            const key = `${d.getFullYear()}-${i + 1}`;
+            monthsMap.set(key, { revenue: 0, expenses: 0 });
+            monthsRange.push({ key, name: d.toLocaleString('ar-EG', { month: 'long' }) });
+          }
         }
 
         appointmentsSnap.forEach(doc => {
@@ -171,17 +190,11 @@ const AdminDashboard = () => {
         });
         setExpenses(totalExpenses);
 
-        // Prepare chart data for last 6 months
-        const monthsLabels = [];
-        const monthsData: ChartDatum[] = [];
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const monthName = d.toLocaleString('ar-EG', { month: 'long' });
-          const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        // Prepare chart data for selected range
+        const monthsData: ChartDatum[] = monthsRange.map(({ key, name }) => {
           const m = monthsMap.get(key) || { revenue: 0, expenses: 0 };
-          monthsLabels.push(monthName);
-          monthsData.push({ name: monthName, الإيرادات: m.revenue, المصروفات: m.expenses });
-        }
+          return { name, الإيرادات: m.revenue, المصروفات: m.expenses };
+        });
         setChartData(monthsData);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -190,7 +203,7 @@ const AdminDashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [barChartFilter]);
 
   // Protect route for regular users
   React.useEffect(() => {
@@ -361,15 +374,15 @@ const AdminDashboard = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow border-2 border-blue-400/70 shadow-blue-200/60 bg-gradient-to-br from-blue-50 via-white to-blue-100">
               <CardContent className="flex items-start p-6">
-                <div className="p-3 rounded-full bg-green-50 text-green-600 mr-4">
+                <div className="p-3 rounded-full bg-blue-50 text-blue-600 mr-4 border border-blue-200 shadow-sm">
                   <FiDollarSign className="text-2xl" />
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm">إجمالي الإيرادات</p>
-                  <h3 className="text-2xl font-bold mt-1">{revenue.toLocaleString()} ج.م</h3>
-                  <p className="text-green-600 text-xs mt-1 flex items-center">
+                  <h3 className="text-2xl font-bold mt-1 text-blue-700">{revenue.toLocaleString()} ج.م</h3>
+                  <p className="text-blue-600 text-xs mt-1 flex items-center">
                     <FiTrendingUp className="ml-1" /> +18% عن الشهر الماضي
                   </p>
                 </div>
@@ -432,10 +445,14 @@ const AdminDashboard = () => {
               <h2 className="text-lg font-bold text-gray-800 flex items-center">
                 <FiActivity className="ml-2" /> الإيرادات والمصروفات
               </h2>
-              <select className="text-sm border rounded px-3 py-1 bg-gray-50">
-                <option>آخر 6 شهور</option>
-                <option>هذا العام</option>
-                <option>العام الماضي</option>
+              <select
+                className="text-sm border rounded px-3 py-1 bg-gray-50"
+                value={barChartFilter}
+                onChange={e => setBarChartFilter(e.target.value)}
+              >
+                <option value="6months">آخر 6 شهور</option>
+                <option value="year">هذا العام</option>
+                <option value="lastyear">العام الماضي</option>
               </select>
             </div>
             <div className="h-64 sm:h-80">

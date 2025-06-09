@@ -235,7 +235,9 @@ const ReportsPage = () => {
                 <p className="text-gray-600">ملخص عن الخدمات المقدمة وعدد الجلسات</p>
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-xs text-gray-400">آخر تحديث: اليوم</span>
-                  <button className="px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-br from-purple-500 to-purple-600 hover:opacity-90 transition-opacity shadow-md">عرض التفاصيل</button>
+                  <button className="px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-br from-purple-500 to-purple-600 hover:opacity-90 transition-opacity shadow-md" onClick={() => navigate('/admin/services-report')}>
+  عرض التفاصيل
+</button>
                 </div>
               </div>
             </motion.div>

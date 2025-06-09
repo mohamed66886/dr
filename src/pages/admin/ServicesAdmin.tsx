@@ -32,6 +32,7 @@ type Service = {
   image: string;
   icon: string;
   features: string[];
+  price: number;
 };
 
 interface ServiceForm {
@@ -40,6 +41,7 @@ interface ServiceForm {
   image: string;
   icon: string;
   features: string[];
+  price: number;
 }
 
 // تأثيرات الحركة
@@ -69,7 +71,8 @@ const ServicesAdmin = () => {
     description: '', 
     image: '', 
     icon: '', 
-    features: [''] 
+    features: [''],
+    price: 0
   });
   const [editId, setEditId] = useState<string | null>(null);
   const [editService, setEditService] = useState<ServiceForm>({ 
@@ -77,7 +80,8 @@ const ServicesAdmin = () => {
     description: '', 
     image: '', 
     icon: '', 
-    features: [''] 
+    features: [''],
+    price: 0
   });
   const [isAdding, setIsAdding] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -151,7 +155,8 @@ const ServicesAdmin = () => {
         description: '', 
         image: '', 
         icon: '', 
-        features: [''] 
+        features: [''],
+        price: 0
       });
       
       setIsAdding(false);
@@ -366,6 +371,20 @@ const ServicesAdmin = () => {
                       onChange={e => setNewService({ ...newService, icon: e.target.value })}
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      سعر الخدمة
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="مثال: 200"
+                      value={newService.price || ''}
+                      onChange={e => setNewService({ ...newService, price: Number(e.target.value) })}
+                      min={0}
+                    />
+                  </div>
                 </div>
                 
                 <div className="mb-4">
@@ -456,6 +475,9 @@ const ServicesAdmin = () => {
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     الصورة
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    السعر
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     الإجراءات
@@ -568,6 +590,21 @@ const ServicesAdmin = () => {
                             </motion.div>
                           ) : (
                             <span className="text-gray-400">لا يوجد</span>
+                          )}
+                        </td>
+
+                        {/* السعر */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {editId === service.id ? (
+                            <input
+                              type="number"
+                              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              value={editService.price || ''}
+                              onChange={e => setEditService({ ...editService, price: Number(e.target.value) })}
+                              min={0}
+                            />
+                          ) : (
+                            <div className="text-sm text-gray-900">{service.price ? service.price + ' جنيه' : '-'}</div>
                           )}
                         </td>
                         
