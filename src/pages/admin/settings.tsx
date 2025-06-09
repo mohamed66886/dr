@@ -29,11 +29,11 @@ const defaultSettings = {
   whatsapp: '01551290902',
   about: 'عيادة متخصصة في طب الأسنان توفر أحدث التقنيات وعلاجات الأسنان بجودة عالية وبرعاية فريق طبي متخصص.',
   expenseTypes: [
-    { value: 'rent', label: 'إيجار' },
-    { value: 'salary', label: 'رواتب' },
-    { value: 'supplies', label: 'مستلزمات' },
-    { value: 'maintenance', label: 'صيانة' },
-    { value: 'other', label: 'أخرى' },
+    { value: 'rent', label: 'إيجار', isDirect: true },
+    { value: 'salary', label: 'رواتب', isDirect: true },
+    { value: 'supplies', label: 'مستلزمات', isDirect: true },
+    { value: 'maintenance', label: 'صيانة', isDirect: true },
+    { value: 'other', label: 'أخرى', isDirect: false },
   ],
 };
 
@@ -127,10 +127,17 @@ const SettingsAdmin = () => {
     }));
   };
 
+  const handleExpenseTypeCheckbox = (idx, checked) => {
+    setSettings(prev => ({
+      ...prev,
+      expenseTypes: prev.expenseTypes.map((t, i) => i === idx ? { ...t, isDirect: checked } : t)
+    }));
+  };
+
   const addExpenseType = () => {
     setSettings(prev => ({
       ...prev,
-      expenseTypes: [...prev.expenseTypes, { value: '', label: '' }]
+      expenseTypes: [...prev.expenseTypes, { value: '', label: '', isDirect: true }]
     }));
   };
 
@@ -429,7 +436,7 @@ const SettingsAdmin = () => {
                     {settings.expenseTypes.map((t, idx) => (
                       <motion.div
                         key={idx}
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 items-center"
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-center"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.1 * idx }}
@@ -449,6 +456,16 @@ const SettingsAdmin = () => {
                             onChange={e => handleExpenseTypeChange(idx, 'label', e.target.value)}
                             placeholder="مثال: إيجار"
                           />
+                        </div>
+                        <div className="flex items-center h-full pt-6">
+                          <input
+                            type="checkbox"
+                            id={`isDirect-${idx}`}
+                            checked={t.isDirect || false}
+                            onChange={e => handleExpenseTypeCheckbox(idx, e.target.checked)}
+                            className="mr-2"
+                          />
+                          <Label htmlFor={`isDirect-${idx}`}>{t.isDirect ? 'مباشر' : 'غير مباشر'}</Label>
                         </div>
                         <div className="flex items-end h-full">
                           <Button

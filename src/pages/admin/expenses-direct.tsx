@@ -27,12 +27,12 @@ const DirectExpenses = () => {
   const [type, setType] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [expenseTypes, setExpenseTypes] = useState([
-    { value: 'rent', label: 'إيجار' },
-    { value: 'salary', label: 'رواتب' },
-    { value: 'supplies', label: 'مستلزمات' },
-    { value: 'maintenance', label: 'صيانة' },
-    { value: 'other', label: 'أخرى' },
+  const [expenseTypes, setExpenseTypes] = useState<{ value: string; label: string; isDirect?: boolean }[]>([
+    { value: 'rent', label: 'إيجار', isDirect: true },
+    { value: 'salary', label: 'رواتب', isDirect: true },
+    { value: 'supplies', label: 'مستلزمات', isDirect: true },
+    { value: 'maintenance', label: 'صيانة', isDirect: true },
+    { value: 'other', label: 'أخرى', isDirect: false },
   ]);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [editId, setEditId] = useState<string | null>(null);
@@ -45,6 +45,7 @@ const DirectExpenses = () => {
     return expenses.slice(start, start + rowsPerPage);
   }, [expenses, page]);
   const totalAmount = useMemo(() => expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0), [expenses]);
+  const [expenseCategory, setExpenseCategory] = useState<'direct' | 'indirect'>('direct');
 
   useEffect(() => {
     const fetchExpenseTypes = async () => {
@@ -54,10 +55,10 @@ const DirectExpenses = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (Array.isArray(data.expenseTypes)) {
-            // تصفية وتصحيح القيم
+            // جلب isDirect
             const validTypes = data.expenseTypes
               .filter(t => t && typeof t.value === 'string' && typeof t.label === 'string')
-              .map(t => ({ value: t.value, label: t.label }));
+              .map(t => ({ value: t.value, label: t.label, isDirect: t.isDirect }));
             if (validTypes.length > 0) {
               setExpenseTypes(validTypes);
             }
@@ -107,7 +108,6 @@ const DirectExpenses = () => {
     }
     const selectedType = expenseTypes.find(t => t.value === type);
     const typeLabel = selectedType ? selectedType.label : type;
-    
     try {
       await addDoc(collection(db, 'expenses'), {
         date,
@@ -115,20 +115,19 @@ const DirectExpenses = () => {
         type,
         typeLabel,
         notes,
-        expenseType: 'direct', // تمييز المصروفات المباشرة
+        expenseType: expenseCategory, // حفظ التصنيف
         createdAt: new Date(),
       });
-      
       toast.success('تمت إضافة المصروف بنجاح!', {
         position: 'top-center',
         duration: 3000,
       });
-      
       // Reset form
       setDate('');
       setAmount('');
       setType('');
       setNotes('');
+      setExpenseCategory('direct');
     } catch (error) {
       toast.error('حدث خطأ أثناء إضافة المصروف', {
         position: 'top-center',
@@ -190,6 +189,14 @@ const DirectExpenses = () => {
     }
   }, []);
 
+  // فلترة أنواع المصروفات حسب التصنيف
+  const filteredExpenseTypes = expenseTypes.filter(t => expenseCategory === 'direct' ? t.isDirect : t.isDirect === false);
+
+  // إعادة تعيين نوع المصروف عند تغيير التصنيف
+  useEffect(() => {
+    setType('');
+  }, [expenseCategory]);
+
   return (
     <AdminLayout>
       <motion.div
@@ -206,9 +213,9 @@ const DirectExpenses = () => {
           >
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3">
               <FiDollarSign className="text-dental-blue" />
-              إضافة مصروف مباشر
+اضافة مصروف
             </h1>
-            <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-base">أدخل تفاصيل المصروف المباشر للعيادة</p>
+            <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-base">أدخل تفاصيل المصروف للعيادة</p>
           </motion.div>
 
           <motion.div
@@ -219,6 +226,27 @@ const DirectExpenses = () => {
           >
             <form onSubmit={handleSubmit} className="p-3 sm:p-6 md:p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
+                {/* التصنيف */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="md:col-span-2"
+                >
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                    تصنيف المصروف
+                  </label>
+                  <select
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-dental-blue focus:border-dental-blue outline-none transition"
+                    value={expenseCategory}
+                    onChange={e => setExpenseCategory(e.target.value as 'direct' | 'indirect')}
+                    required
+                  >
+                    <option value="direct">مباشر</option>
+                    <option value="indirect">غير مباشر</option>
+                  </select>
+                </motion.div>
+
                 {/* التاريخ */}
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -278,7 +306,7 @@ const DirectExpenses = () => {
                     required
                   >
                     <option value="">اختر نوع المصروف</option>
-                    {expenseTypes.map(opt => (
+                    {filteredExpenseTypes.map(opt => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
