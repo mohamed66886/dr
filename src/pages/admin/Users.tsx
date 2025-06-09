@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiEdit2, FiTrash2, FiUserPlus, FiSave, FiX, FiUsers, FiUser, FiShield } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiUserPlus, FiSave, FiX, FiUsers, FiUser, FiShield, FiCalendar } from 'react-icons/fi';
 import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { useForm } from "react-hook-form";
 import { isAdminAuthenticated } from "@/lib/auth";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 type User = {
   id?: string;
@@ -23,6 +34,8 @@ const Users = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<User>>({});
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<User>({
     defaultValues: { name: "", email: "", password: "", role: "user" }
@@ -107,13 +120,21 @@ const Users = () => {
 
   // حذف مستخدم
   const handleDelete = async (id: string) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+    setDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     try {
-      await deleteDoc(doc(db, "users", id));
-      setUsers(users => users.filter(u => u.id !== id));
+      await deleteDoc(doc(db, "users", deleteId));
+      setUsers(users => users.filter(u => u.id !== deleteId));
       setSuccess("تم حذف المستخدم بنجاح");
     } catch {
       setError("حدث خطأ أثناء الحذف");
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteId(null);
     }
   };
 
@@ -520,6 +541,21 @@ const Users = () => {
             )}
           </div>
         </motion.div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+              <AlertDialogDescription>
+                هل أنت متأكد أنك تريد حذف هذا المستخدم؟ لا يمكن التراجع عن هذه العملية.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>إلغاء</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete}>تأكيد</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );

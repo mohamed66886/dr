@@ -45,12 +45,13 @@ const adminLinks = [
     dropdown: [
       { 
         to: '/admin/expenses/direct', 
-        label: 'مصروفات مباشرة',
+
+        label: 'اضافة مصروفات ',
         icon: <FiFileText className="text-sm" />
       },
       { 
-        to: '/admin/expenses/indirect', 
-        label: 'مصروفات غير مباشرة',
+        to: '/admin/expenses', 
+        label: 'انواع المصروفات  ',
         icon: <FiFileText className="text-sm" />
       },
     ],
@@ -77,6 +78,12 @@ const adminLinks = [
 
 
 
+  },
+  {
+    to : '/admin/database',
+    label: 'قاعد البيانات',
+    icon: <FiFileText className="text-lg" />
+    
   }
 ];
 
@@ -137,23 +144,24 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       damping: 20
                     } 
                   }}
-                  whileHover={{ x: -5 }}
+                  whileHover={{ x: -8, scale: 1.03, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.07)' }}
                   transition={{ type: 'spring', stiffness: 300 }}
+                  className="rounded-xl overflow-hidden"
                 >
                   {link.dropdown ? (
                     <SidebarMenuItem>
                       <SidebarMenuButton 
                         isActive={link.dropdown.some(sub => isActiveLink(sub.to))}
                         onClick={() => toggleSubmenu(link.label)}
-                        className={`flex items-center justify-between px-4 py-3 hover:bg-white/10 transition-all rounded-lg ${
+                        className={`flex items-center justify-between px-5 py-3 hover:bg-white/15 transition-all rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200/60 group ${
                           openSubmenus[link.label] ? 'bg-white/10' : ''
                         } ${
-                          link.dropdown.some(sub => isActiveLink(sub.to)) ? 'bg-white/15 font-semibold' : ''
+                          link.dropdown.some(sub => isActiveLink(sub.to)) ? 'bg-gradient-to-l from-blue-200/20 to-white/10 font-bold text-blue-100' : ''
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="text-blue-100">{link.icon}</span>
-                          <span className="font-medium">{link.label}</span>
+                          <span className={`transition-colors ${link.dropdown.some(sub => isActiveLink(sub.to)) ? 'text-blue-300' : 'text-blue-100 group-hover:text-blue-200'}`}>{link.icon}</span>
+                          <span className="font-medium text-base tracking-wide">{link.label}</span>
                         </div>
                         <motion.span
                           animate={{ rotate: openSubmenus[link.label] ? 180 : 0 }}
@@ -194,11 +202,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                                   <Link to={sub.to}>
                                     <SidebarMenuSubButton 
                                       isActive={isActiveLink(sub.to)}
-                                      className={`flex items-center gap-3 px-4 py-2.5 mx-2 hover:bg-white/10 transition-all rounded-lg ${
-                                        isActiveLink(sub.to) ? 'bg-white/15 font-semibold' : ''
+                                      className={`flex items-center gap-3 px-6 py-2.5 mx-2 hover:bg-white/10 transition-all rounded-lg ${
+                                        isActiveLink(sub.to) ? 'bg-gradient-to-l from-blue-200/20 to-white/10 font-semibold text-blue-100' : ''
                                       }`}
                                     >
-                                      <span className="text-blue-100">{sub.icon}</span>
+                                      <span className={`transition-colors ${isActiveLink(sub.to) ? 'text-blue-300' : 'text-blue-100'}`}>{sub.icon}</span>
                                       <span>{sub.label}</span>
                                     </SidebarMenuSubButton>
                                   </Link>
@@ -214,12 +222,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       <Link to={link.to}>
                         <SidebarMenuButton 
                           isActive={isActiveLink(link.to, link.exact)}
-                          className={`flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-all rounded-lg ${
-                            isActiveLink(link.to, link.exact) ? 'bg-white/15 font-semibold' : ''
+                          className={`flex items-center gap-3 px-5 py-3 hover:bg-white/15 transition-all rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200/60 group ${
+                            isActiveLink(link.to, link.exact) ? 'bg-gradient-to-l from-blue-200/20 to-white/10 font-bold text-blue-100' : ''
                           }`}
                         >
-                          <span className="text-blue-100">{link.icon}</span>
-                          <span>{link.label}</span>
+                          <span className={`transition-colors ${isActiveLink(link.to, link.exact) ? 'text-blue-300' : 'text-blue-100 group-hover:text-blue-200'}`}>{link.icon}</span>
+                          <span className="font-medium text-base tracking-wide">{link.label}</span>
                         </SidebarMenuButton>
                       </Link>
                     </SidebarMenuItem>

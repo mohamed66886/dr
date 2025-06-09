@@ -12,6 +12,17 @@ import { db } from '@/firebase';
 import AdminLayout from '@/components/AdminLayout';
 import { Loader2 } from 'lucide-react';
 import { isAdminAuthenticated } from "@/lib/auth";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const defaultSettings = {
   clinicName: 'عيادة د. محمد رشاد لطب الأسنان',
@@ -61,6 +72,12 @@ const SettingsAdmin = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteHourIdx, setDeleteHourIdx] = useState<number | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editHourIdx, setEditHourIdx] = useState<number | null>(null);
+  const [editHourDay, setEditHourDay] = useState("");
+  const [editHourTime, setEditHourTime] = useState("");
 
   // جلب الإعدادات من Firestore عند التحميل
   useEffect(() => {
@@ -109,6 +126,22 @@ const SettingsAdmin = () => {
       ...prev,
       workingHours: [...prev.workingHours, { day: '', time: '' }]
     }));
+  };
+
+  const handleRemoveWorkingHour = (idx) => {
+    setDeleteHourIdx(idx);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmRemoveWorkingHour = () => {
+    if (deleteHourIdx !== null && settings.workingHours.length > 1) {
+      setSettings(prev => ({
+        ...prev,
+        workingHours: prev.workingHours.filter((_, i) => i !== deleteHourIdx)
+      }));
+    }
+    setDeleteDialogOpen(false);
+    setDeleteHourIdx(null);
   };
 
   const removeWorkingHour = (idx) => {
@@ -162,6 +195,26 @@ const SettingsAdmin = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditWorkingHour = (idx) => {
+    setEditHourIdx(idx);
+    setEditHourDay(settings.workingHours[idx].day);
+    setEditHourTime(settings.workingHours[idx].time);
+    setEditDialogOpen(true);
+  };
+
+  const confirmEditWorkingHour = () => {
+    if (editHourIdx !== null) {
+      setSettings(prev => ({
+        ...prev,
+        workingHours: prev.workingHours.map((h, i) =>
+          i === editHourIdx ? { day: editHourDay, time: editHourTime } : h
+        )
+      }));
+    }
+    setEditDialogOpen(false);
+    setEditHourIdx(null);
   };
 
   if (loading) {
@@ -381,12 +434,21 @@ const SettingsAdmin = () => {
                             type="button" 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => removeWorkingHour(idx)}
+                            onClick={() => handleRemoveWorkingHour(idx)}
                             className="text-red-500 hover:bg-red-50 h-10 w-full"
                             disabled={settings.workingHours.length <= 1}
                           >
                             <FiTrash2 className="mr-2" />
                             حذف
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditWorkingHour(idx)}
+                            className="text-blue-500 hover:bg-blue-50 h-10 w-full mr-2"
+                          >
+                            تعديل
                           </Button>
                         </div>
                       </motion.div>
@@ -423,76 +485,10 @@ const SettingsAdmin = () => {
                 </motion.div>
                 
                 {/* القسم الخامس: أنواع الصرف */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.45 }}
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 flex items-center gap-2">
-                    <FiPlus className="text-dental-blue" />
-                    أنواع الصرف
-                  </h3>
-                  <div className="space-y-3 mt-4">
-                    {settings.expenseTypes.map((t, idx) => (
-                      <motion.div
-                        key={idx}
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.1 * idx }}
-                      >
-                        <div>
-                          <Label>القيمة (بالإنجليزية)</Label>
-                          <Input
-                            value={t.value}
-                            onChange={e => handleExpenseTypeChange(idx, 'value', e.target.value)}
-                            placeholder="مثال: rent"
-                          />
-                        </div>
-                        <div>
-                          <Label>الاسم الظاهر</Label>
-                          <Input
-                            value={t.label}
-                            onChange={e => handleExpenseTypeChange(idx, 'label', e.target.value)}
-                            placeholder="مثال: إيجار"
-                          />
-                        </div>
-                        <div className="flex items-center h-full pt-6">
-                          <input
-                            type="checkbox"
-                            id={`isDirect-${idx}`}
-                            checked={t.isDirect || false}
-                            onChange={e => handleExpenseTypeCheckbox(idx, e.target.checked)}
-                            className="mr-2"
-                          />
-                          <Label htmlFor={`isDirect-${idx}`}>{t.isDirect ? 'مباشر' : 'غير مباشر'}</Label>
-                        </div>
-                        <div className="flex items-end h-full">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeExpenseType(idx)}
-                            className="text-red-500 hover:bg-red-50 h-10 w-full"
-                            disabled={settings.expenseTypes.length <= 1}
-                          >
-                            <FiTrash2 className="mr-2" />
-                            حذف
-                          </Button>
-                        </div>
-                      </motion.div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={addExpenseType}
-                      className="mt-2 text-dental-blue hover:bg-blue-50 w-full sm:w-auto"
-                    >
-                      <FiPlus className="mr-2" />
-                      إضافة نوع صرف
-                    </Button>
-                  </div>
-                </motion.div>
+                {/* تم نقل إدارة أنواع الصرف إلى صفحة منفصلة */}
+                {/* <motion.div>
+                  ... كود أنواع الصرف ...
+                </motion.div> */}
                 
                 {/* زر الحفظ */}
                 <motion.div
@@ -525,6 +521,42 @@ const SettingsAdmin = () => {
           </Card>
         </motion.div>
       </div>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد أنك تريد حذف وقت العمل هذا؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveWorkingHour}>تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد التعديل</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد أنك تريد تعديل وقت العمل لهذا اليوم؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 my-4">
+            <Label>اليوم</Label>
+            <Input value={editHourDay} onChange={e => setEditHourDay(e.target.value)} />
+            <Label>الوقت</Label>
+            <Input value={editHourTime} onChange={e => setEditHourTime(e.target.value)} />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setEditDialogOpen(false)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmEditWorkingHour}>تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

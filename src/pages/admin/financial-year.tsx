@@ -20,6 +20,16 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 // Animation variants
 const fadeIn = (direction = 'up', delay = 0, duration = 0.5) => ({
@@ -72,6 +82,9 @@ const FinancialYearPage = () => {
     to: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteYearId, setDeleteYearId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   // Check authentication and fetch data
@@ -211,31 +224,58 @@ const FinancialYearPage = () => {
     });
   };
 
+  const handleDelete = async (id: string) => {
+    setDeleteYearId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteYearId) return;
+    try {
+      await deleteDoc(doc(db, 'financialYears', deleteYearId));
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف السنة المالية بنجاح",
+        className: "bg-green-100 border-green-200 text-green-800",
+      });
+      fetchFinancialYears();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في الحذف",
+        description: "حدث خطأ أثناء محاولة حذف السنة المالية",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteYearId(null);
+    }
+  };
+
   const handleEditSave = async () => {
+    setEditDialogOpen(true);
+  };
+
+  const confirmEditSave = async () => {
     if (!editId) return;
     setIsSubmitting(true);
-
     if (!validateYear(editData.from, editData.to)) {
       setIsSubmitting(false);
+      setEditDialogOpen(false);
       return;
     }
-
     try {
       await updateDoc(doc(db, 'financialYears', editId), {
         from: editData.from,
         to: editData.to,
       });
-      
       toast({
         title: "تم التحديث",
         description: "تم تحديث السنة المالية بنجاح",
         className: "bg-green-100 border-green-200 text-green-800",
       });
-      
       setEditId(null);
       fetchFinancialYears();
     } catch (error) {
-      console.error("Error updating financial year:", error);
       toast({
         variant: "destructive",
         title: "خطأ في التحديث",
@@ -243,45 +283,8 @@ const FinancialYearPage = () => {
       });
     } finally {
       setIsSubmitting(false);
+      setEditDialogOpen(false);
     }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'financialYears', id));
-      
-      toast({
-        title: "تم الحذف",
-        description: "تم حذف السنة المالية بنجاح",
-        className: "bg-green-100 border-green-200 text-green-800",
-      });
-      
-      fetchFinancialYears();
-    } catch (error) {
-      console.error("Error deleting financial year:", error);
-      toast({
-        variant: "destructive",
-        title: "خطأ في الحذف",
-        description: "حدث خطأ أثناء محاولة حذف السنة المالية",
-      });
-    }
-  };
-
-  const confirmDelete = (id: string) => {
-    toast({
-      title: "هل أنت متأكد؟",
-      description: "سيتم حذف السنة المالية بشكل دائم",
-      className: "bg-yellow-100 border-yellow-200 text-yellow-800",
-      action: (
-        <ToastAction 
-          altText="حذف" 
-          className="bg-red-500 hover:bg-red-600 text-white"
-          onClick={() => handleDelete(id)}
-        >
-          حذف
-        </ToastAction>
-      ),
-    });
   };
 
   return (
@@ -469,7 +472,7 @@ const FinancialYearPage = () => {
                                 <Button
                                   variant="destructive"
                                   size="sm"
-                                  onClick={() => confirmDelete(year.id)}
+                                  onClick={() => handleDelete(year.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -486,6 +489,36 @@ const FinancialYearPage = () => {
           </Card>
         </motion.div>
       </motion.div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد أنك تريد حذف هذه السنة المالية؟ لا يمكن التراجع عن هذه العملية.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد التعديل</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد أنك تريد حفظ التعديلات على هذه السنة المالية؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setEditDialogOpen(false)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmEditSave}>تأكيد</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

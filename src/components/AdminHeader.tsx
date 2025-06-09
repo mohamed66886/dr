@@ -54,26 +54,25 @@ const AdminHeader = () => {
   };
 
   return (
-    <header className="bg-primary-600 shadow-sm w-full sticky top-0 z-50">
+    <header className="bg-primary-600 shadow-md w-full sticky top-0 z-50">
       <div className="container mx-auto px-6 py-3">
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center space-x-4 rtl:space-x-reverse">
+          <div className="flex items-center gap-4 rtl:flex-row-reverse">
             {/* زر الهامبرجر للموبايل */}
             {isMobile && (
-              <SidebarTrigger className="text-white md:hidden mr-2" />
+              <SidebarTrigger className="text-white md:hidden mr-2 focus:outline-none focus:ring-2 focus:ring-blue-200/60" />
             )}
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-500">
-              <FiUser className="text-white text-xl" />
+            <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-tr from-blue-400 to-primary-500 shadow-lg border border-white/20">
+              <FiUser className="text-white text-2xl" />
             </div>
-            <span className="text-lg font-semibold text-white truncate max-w-xs">
+            <span className="text-lg font-bold text-white truncate max-w-xs drop-shadow-sm tracking-wide">
               {userName}
             </span>
           </div>
-          
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex items-center gap-2 bg-white text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-medium disabled:opacity-70 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-white text-primary-600 px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-all duration-200 font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-200/60 disabled:opacity-70 disabled:cursor-not-allowed"
             aria-label="تسجيل الخروج"
           >
             {isLoggingOut ? (

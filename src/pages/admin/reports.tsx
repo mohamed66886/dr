@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { FiBarChart2, FiDollarSign, FiUsers, FiFileText, FiDownload, FiFilter, FiCalendar } from 'react-icons/fi';
 import { MdOutlineMedicalServices, MdOutlineInsights } from 'react-icons/md';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { useNavigate } from 'react-router-dom';
 import { isAdminAuthenticated } from "@/lib/auth";
@@ -15,6 +15,9 @@ const ReportsPage = () => {
   const [expenseTotal, setExpenseTotal] = useState<number>(0);
   const [userCount, setUserCount] = useState<number>(0);
   const [serviceCount, setServiceCount] = useState<number>(0);
+  const [revenue, setRevenue] = useState<number>(0);
+  const [confirmedAppointments, setConfirmedAppointments] = useState<number>(0);
+  const [profit, setProfit] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +42,17 @@ const ReportsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      // جلب سعر الكشف من الإعدادات
+      let visitPrice = 0;
+      try {
+        const settingsRef = doc(db, 'config', 'clinicSettings');
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+          const data = settingsSnap.data();
+          visitPrice = parseFloat(data.price) || 0;
+        }
+      } catch (e) { /* ignore */ }
+
       // إجمالي المصروفات
       const expensesSnap = await getDocs(collection(db, 'expenses'));
       let expenseSum = 0;
@@ -54,6 +68,16 @@ const ReportsPage = () => {
       // عدد الخدمات
       const servicesSnap = await getDocs(collection(db, 'services'));
       setServiceCount(servicesSnap.size);
+      // جلب المواعيد وحساب الإيرادات من المؤكد فقط
+      const appointmentsSnap = await getDocs(collection(db, 'appointments'));
+      let confirmedCount = 0;
+      appointmentsSnap.forEach(doc => {
+        const d = doc.data();
+        if (d.status === 'confirmed') confirmedCount++;
+      });
+      setConfirmedAppointments(confirmedCount);
+      setRevenue(confirmedCount * visitPrice);
+      setProfit((confirmedCount * visitPrice) - expenseSum);
       setLoading(false);
     };
     fetchData();
@@ -125,12 +149,13 @@ const ReportsPage = () => {
                     <h2 className="text-xl font-bold text-gray-800">تقرير المصروفات</h2>
                   </div>
                   <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                    {loading ? '...' : expenseTotal.toLocaleString() + ' ر.س'}
+                    {loading ? '...' : expenseTotal.toLocaleString() + ' جنيه'}
                   </span>
                 </div>
                 <p className="text-gray-600">عرض وتحليل جميع المصروفات المباشرة وغير المباشرة</p>
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-xs text-gray-400">آخر تحديث: اليوم</span>
+
                   <button
                     className="px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-br from-blue-500 to-blue-600 hover:opacity-90 transition-opacity shadow-md"
                     onClick={() => navigate('/admin/expenses-report')}
@@ -240,8 +265,8 @@ const ReportsPage = () => {
                 className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-100"
               >
                 <p className="text-gray-500">إجمالي الإيرادات</p>
-                <p className="text-2xl font-bold text-blue-600">45,320 ر.س</p>
-                <p className="text-sm text-green-500 mt-1">↑ 12% عن الشهر الماضي</p>
+                <p className="text-2xl font-bold text-blue-600">{loading ? '...' : revenue.toLocaleString() + ' جنيه'}</p>
+                <p className="text-sm text-green-500 mt-1">—</p>
               </motion.div>
               
               <motion.div 
@@ -249,8 +274,8 @@ const ReportsPage = () => {
                 className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-100"
               >
                 <p className="text-gray-500">إجمالي المصروفات</p>
-                <p className="text-2xl font-bold text-red-600">12,450 ر.س</p>
-                <p className="text-sm text-green-500 mt-1">↓ 8% عن الشهر الماضي</p>
+                <p className="text-2xl font-bold text-red-600">{loading ? '...' : expenseTotal.toLocaleString() + ' جنيه'}</p>
+                <p className="text-sm text-green-500 mt-1">—</p>
               </motion.div>
               
               <motion.div 
@@ -258,17 +283,17 @@ const ReportsPage = () => {
                 className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-100"
               >
                 <p className="text-gray-500">عدد المواعيد</p>
-                <p className="text-2xl font-bold text-purple-600">124</p>
-                <p className="text-sm text-green-500 mt-1">↑ 22% عن الشهر الماضي</p>
+                <p className="text-2xl font-bold text-purple-600">{loading ? '...' : confirmedAppointments}</p>
+                <p className="text-sm text-green-500 mt-1">—</p>
               </motion.div>
               
               <motion.div 
                 whileHover={{ scale: 1.03 }}
                 className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-100"
               >
-                <p className="text-gray-500">رضا العملاء</p>
-                <p className="text-2xl font-bold text-green-600">94%</p>
-                <p className="text-sm text-green-500 mt-1">↑ 3% عن الشهر الماضي</p>
+                <p className="text-gray-500">الأرباح</p>
+                <p className="text-2xl font-bold text-green-600">{loading ? '...' : profit.toLocaleString() + ' جنيه'}</p>
+                <p className="text-sm text-green-500 mt-1">—</p>
               </motion.div>
             </div>
           </motion.div>
