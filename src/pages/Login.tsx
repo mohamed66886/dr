@@ -50,7 +50,12 @@ export default function Login() {
           "settings",
           "expenses-direct",
           "expenses-report",
-          "reports"
+          "reports",
+          "expenses",
+          "profit-report",
+          "database",
+          "financial-year",
+          "services-report"
         ]
       }));
       setTimeout(() => {
