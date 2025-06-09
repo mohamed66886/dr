@@ -254,13 +254,13 @@ const AdminDashboard = () => {
       {
         label: 'الإيرادات',
         data: chartData.map(d => d.الإيرادات),
-        backgroundColor: '#10b981',
+        backgroundColor: '#ef4444', // أحمر
         borderRadius: 6
       },
       {
         label: 'المصروفات',
         data: chartData.map(d => d.المصروفات),
-        backgroundColor: '#ef4444',
+        backgroundColor: '#3b82f6', // أزرق
         borderRadius: 6
       }
     ]
