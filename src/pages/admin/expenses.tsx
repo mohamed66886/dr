@@ -288,19 +288,20 @@ const ExpensesTypesSection = () => {
                           <input
                             type="checkbox"
                             checked={t.isDirect}
-                            onChange={e => handleChange(idx, 'isDirect', e.target.checked)}
+                            onChange={e => editIdx === idx ? handleChange(idx, 'isDirect', e.target.checked) : null}
                             id={`isDirect-${idx}`}
                             className="sr-only"
+                            disabled={editIdx !== idx}
                           />
                           <div
-                            className={`block w-12 h-6 rounded-full ${t.isDirect ? 'bg-dental-blue' : 'bg-gray-300'}`}
-                            onClick={() => handleChange(idx, 'isDirect', !t.isDirect)}
-                            style={{ cursor: 'pointer' }}
+                            className={`block w-12 h-6 rounded-full ${t.isDirect ? 'bg-dental-blue' : 'bg-gray-300'} ${editIdx !== idx ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                            onClick={() => editIdx === idx && handleChange(idx, 'isDirect', !t.isDirect)}
+                            style={{ cursor: editIdx === idx ? 'pointer' : 'not-allowed' }}
                           ></div>
                           <div
-                            className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${t.isDirect ? 'transform translate-x-6' : ''}`}
-                            onClick={() => handleChange(idx, 'isDirect', !t.isDirect)}
-                            style={{ cursor: 'pointer' }}
+                            className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${t.isDirect ? 'transform translate-x-6' : ''} ${editIdx !== idx ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                            onClick={() => editIdx === idx && handleChange(idx, 'isDirect', !t.isDirect)}
+                            style={{ cursor: editIdx === idx ? 'pointer' : 'not-allowed' }}
                           ></div>
                         </div>
                         <Label htmlFor={`isDirect-${idx}`} className="text-sm text-gray-700">
