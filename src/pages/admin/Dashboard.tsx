@@ -281,6 +281,7 @@ const AdminDashboard = () => {
           '#14b8a6'
         ],
         borderWidth: 0
+        
       }
     ]
   };
