@@ -66,7 +66,9 @@ const ExpensesTypesSection = () => {
       }));
       return;
     }
-    setExpenseTypes([...expenseTypes, { value: '', label: '', isDirect: true }]);
+    const newExpenseTypes = [...expenseTypes, { value: '', label: '', isDirect: true }];
+    setExpenseTypes(newExpenseTypes);
+    setEditIdx(newExpenseTypes.length - 1); // اجعل الصف الجديد في وضع التحرير
   };
 
   const removeExpenseType = (idx) => {
