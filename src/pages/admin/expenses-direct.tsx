@@ -22,7 +22,10 @@ type ExpenseItem = {
 };
 
 const DirectExpenses = () => {
-  const [date, setDate] = useState('');
+  // Helper to get today's date in yyyy-mm-dd format
+  const getToday = () => new Date().toISOString().split('T')[0];
+
+  const [date, setDate] = useState(getToday());
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('');
   const [notes, setNotes] = useState('');
@@ -76,7 +79,12 @@ const DirectExpenses = () => {
       try {
         const q = await getDocs(collection(db, 'expenses'));
         const data: ExpenseItem[] = q.docs
-          .filter(d => d.data().expenseType === 'direct')
+          .filter(d => {
+            // دعم المصروفات التي ليس لها expenseType (قديمة) أو تساوي التصنيف الحالي
+            const docType = d.data().expenseType;
+            if (!docType && expenseCategory === 'direct') return true;
+            return docType === expenseCategory;
+          })
           .map(d => {
             const docData = d.data();
             return {
@@ -96,7 +104,7 @@ const DirectExpenses = () => {
       }
     };
     fetchExpenses();
-  }, [loading]);
+  }, [loading, expenseCategory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +131,7 @@ const DirectExpenses = () => {
         duration: 3000,
       });
       // Reset form
-      setDate('');
+      setDate(getToday());
       setAmount('');
       setType('');
       setNotes('');
@@ -263,6 +271,10 @@ const DirectExpenses = () => {
                     value={date}
                     onChange={e => setDate(e.target.value)}
                     required
+                    min="1900-01-01"
+                    max="2100-12-31"
+                    // اجعل القيمة الافتراضية تاريخ اليوم
+                    defaultValue={date === '' ? new Date().toISOString().split('T')[0] : date}
                   />
                 </motion.div>
 
@@ -333,143 +345,153 @@ const DirectExpenses = () => {
                   />
                 </motion.div>
               </div>
-              <div className="mt-4 sm:mt-6 flex flex-col md:flex-row gap-2 sm:gap-4">
+
+              {/* زر الإضافة */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+                className="mt-4 sm:mt-6"
+              >
                 <Button
                   type="submit"
-                  className="flex-1"
+                  className="w-full py-2.5 sm:py-3 rounded-lg bg-dental-blue text-white font-semibold shadow-md hover:bg-dental-blue/90 transition"
+                  disabled={loading}
                 >
-                  حفظ المصروف
+                  {loading ? 'جاري الإضافة...' : 'إضافة مصروف جديد'}
                 </Button>
-              </div>
+              </motion.div>
             </form>
           </motion.div>
 
           {/* جدول المصروفات */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mt-6 sm:mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 sm:mt-10"
           >
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 mb-2 sm:mb-4">
-              قائمة المصروفات المباشرة
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+                قائمة المصروفات
+              </h2>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setPage(1)}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 font-medium shadow-sm hover:bg-gray-300 transition"
+                >
+                  <FiChevronRight className="transform rotate-180" />
+                </Button>
+                <Button
+                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 font-medium shadow-sm hover:bg-gray-300 transition"
+                >
+                  السابق
+                </Button>
+                <Button
+                  onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 font-medium shadow-sm hover:bg-gray-300 transition"
+                >
+                  التالي
+                </Button>
+                <Button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 font-medium shadow-sm hover:bg-gray-300 transition"
+                >
+                  <FiChevronRight />
+                </Button>
+              </div>
+            </div>
 
-            {expenses.length === 0 ? (
-              <p className="text-gray-500 text-center py-4 text-sm sm:text-base">
-                لا توجد مصروفات مباشرة مسجلة بعد.
-              </p>
-            ) : (
-              <div>
-                {/* جدول في الديسكتوب، بطاقات في الموبايل */}
-                <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="whitespace-nowrap">التاريخ</TableHead>
-                        <TableHead className="whitespace-nowrap">المبلغ</TableHead>
-                        <TableHead className="whitespace-nowrap">النوع</TableHead>
-                        <TableHead className="whitespace-nowrap">الملاحظات</TableHead>
-                        <TableHead className="whitespace-nowrap text-center">الإجراءات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedExpenses.map(expense => (
-                        <TableRow key={expense.id}>
-                          <TableCell className="whitespace-nowrap">
-                            {new Date(expense.date).toLocaleDateString('ar-EG')}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {expense.amount.toFixed(2)} جنيه
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {expense.typeLabel}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {expense.notes}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap text-center">
-                            <div className="flex justify-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => handleEdit(expense)}
-                              >
-                                <FiEdit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="icon"
-                                onClick={() => handleDelete(expense.id)}
-                              >
-                                <FiTrash className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center">التاريخ</TableHead>
+                  <TableHead className="text-center">المبلغ</TableHead>
+                  <TableHead className="text-center">النوع</TableHead>
+                  <TableHead className="text-center">الملاحظات</TableHead>
+                  <TableHead className="text-center">الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedExpenses.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                      لا توجد مصروفات لعرضها
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedExpenses.map(expense => (
+                    <TableRow key={expense.id} className="hover:bg-gray-50 transition">
+                      <TableCell className="text-center">
+                        {new Date(expense.date).toLocaleDateString('ar-EG')}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {expense.amount.toFixed(2)} جنيه
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {expense.typeLabel}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {expense.notes}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-2">
+                          <Button
+                            onClick={() => handleEdit(expense)}
+                            className="px-3 py-1.5 rounded-lg bg-yellow-500 text-white font-medium shadow-sm hover:bg-yellow-400 transition"
+                          >
+                            <FiEdit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(expense.id)}
+                            className="px-3 py-1.5 rounded-lg bg-red-500 text-white font-medium shadow-sm hover:bg-red-400 transition"
+                          >
+                            <FiTrash className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {/* معلومات إضافية عن المصروفات */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="mt-6 p-4 sm:p-6 bg-gray-100 rounded-lg shadow-md"
+            >
+              <h3 className="text-md sm:text-lg font-semibold text-gray-800 mb-3">
+                معلومات إضافية
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">إجمالي المصروفات:</span>
+                  <span className="font-semibold text-gray-800">
+                    {totalAmount.toFixed(2)} جنيه
+                  </span>
                 </div>
-                {/* بطاقات في الموبايل */}
-                <div className="sm:hidden flex flex-col gap-3 mt-2">
-                  {paginatedExpenses.map(expense => (
-                    <div key={expense.id} className="bg-white rounded-lg shadow p-3 flex flex-col gap-2 border border-gray-100">
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>{new Date(expense.date).toLocaleDateString('ar-EG')}</span>
-                        <span className="font-bold text-dental-blue">{expense.amount.toFixed(2)} جنيه</span>
-                      </div>
-                      <div className="text-sm font-semibold text-gray-700">{expense.typeLabel}</div>
-                      {expense.notes && (
-                        <div className="text-xs text-gray-600">{expense.notes}</div>
-                      )}
-                      <div className="flex justify-end gap-2 mt-1">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="!p-2"
-                          onClick={() => handleEdit(expense)}
-                        >
-                          <FiEdit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="!p-2"
-                          onClick={() => handleDelete(expense.id)}
-                        >
-                          <FiTrash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex justify-between">
+                  <span className="text-gray-700">عدد الصفحات:</span>
+                  <span className="font-semibold text-gray-800">
+                    {totalPages}
+                  </span>
                 </div>
-                {/* ترقيم الصفحات وإجمالي المصروفات */}
-                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-                  <div className="text-gray-500 text-sm sm:text-base">
-                    إجمالي المصروفات: <strong>{totalAmount.toFixed(2)} جنيه</strong>
-                  </div>
-                  <div className="flex gap-2 mt-2 sm:mt-0">
-                    <Button
-                      variant="outline"
-                      disabled={page === 1}
-                      onClick={() => setPage(page - 1)}
-                      className="text-xs sm:text-base"
-                    >
-                      السابق
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={page === totalPages}
-                      onClick={() => setPage(page + 1)}
-                      className="text-xs sm:text-base"
-                    >
-                      التالي
-                    </Button>
-                  </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">الصفحة الحالية:</span>
+                  <span className="font-semibold text-gray-800">
+                    {page}
+                  </span>
                 </div>
               </div>
-            )}
+            </motion.div>
           </motion.div>
         </div>
       </motion.div>
