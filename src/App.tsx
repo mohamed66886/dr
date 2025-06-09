@@ -27,6 +27,7 @@ import FinancialYearPage from "./pages/admin/financial-year";
 import AdminRoute from "./components/AdminRoute";
 import ExpensesTypesSection from "./pages/admin/expenses";
 import DatabaseAdmin from "./pages/admin/database";
+import ProfitReportPage from "./pages/admin/profit-report";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => {
               <Route path="/admin/expenses" element={<AdminRoute><ExpensesTypesSection /></AdminRoute>} />
               <Route path="/admin/financial-year" element={<AdminRoute><FinancialYearPage /></AdminRoute>} />
               <Route path="/admin/database" element={<AdminRoute><DatabaseAdmin /></AdminRoute>} />
+              <Route path="/admin/profit-report" element={<AdminRoute><ProfitReportPage /></AdminRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

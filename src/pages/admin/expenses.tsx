@@ -29,7 +29,7 @@ const ExpensesTypesSection = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [editIdx, setEditIdx] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
@@ -57,6 +57,15 @@ const ExpensesTypesSection = () => {
   }, []);
 
   const addExpenseType = () => {
+    // تحقق إذا كان هناك صف غير مكتمل
+    const hasEmpty = expenseTypes.some(t => !t.value.trim() || !t.label.trim());
+    if (hasEmpty) {
+      setErrors(prev => ({
+        ...prev,
+        global: 'يرجى إكمال جميع الحقول قبل إضافة نوع جديد.'
+      }));
+      return;
+    }
     setExpenseTypes([...expenseTypes, { value: '', label: '', isDirect: true }]);
   };
 
@@ -214,6 +223,12 @@ const ExpensesTypesSection = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {errors.global && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-2 mb-4 text-center">
+                {errors.global}
+              </div>
+            )}
 
             {loading ? (
               <div className="flex justify-center items-center py-12">

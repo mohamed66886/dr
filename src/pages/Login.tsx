@@ -41,7 +41,17 @@ export default function Login() {
       localStorage.setItem("currentUser", JSON.stringify({
         name: "الأدمن",
         email: data.email,
-        role: "admin"
+        role: "admin",
+        allowedPages: [
+          "dashboard",
+          "appointments",
+          "users",
+          "services",
+          "settings",
+          "expenses-direct",
+          "expenses-report",
+          "reports"
+        ]
       }));
       setTimeout(() => {
         window.location.href = "/admin/Dashboard";
@@ -63,7 +73,8 @@ export default function Login() {
         localStorage.setItem("currentUser", JSON.stringify({
           name: userData.name || "مستخدم",
           email: userData.email,
-          role: userData.role || "user"
+          role: "user",
+          allowedPages: userData.allowedPages || ["appointments"]
         }));
         setTimeout(() => {
           window.location.href = "/admin/appointments";

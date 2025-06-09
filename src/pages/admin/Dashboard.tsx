@@ -70,12 +70,33 @@ const AdminDashboard = () => {
         const usersSnap = await getDocs(collection(db, 'users'));
         setUserCount(usersSnap.size);
 
+        // جلب سعر الكشف من إعدادات العيادة
+        let visitPrice = 0;
+        try {
+          const settingsRef = collection(db, 'config');
+          const settingsSnap = await getDocs(settingsRef);
+          settingsSnap.forEach(doc => {
+            const data = doc.data();
+            if (doc.id === 'clinicSettings' && data.price) {
+              visitPrice = parseFloat(data.price) || 0;
+            }
+          });
+        } catch (e) { /* ignore */ }
+
         // Fetch appointments and calculate metrics
         const appointmentsSnap = await getDocs(collection(db, 'appointments'));
         let done = 0;
         let totalRevenue = 0;
         const updates: Update[] = [];
         const servicesMap = new Map<string, { count: number, revenue: number }>();
+        const monthsMap = new Map<string, { revenue: number, expenses: number }>();
+        const now = new Date();
+        // Prepare months for the last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+          monthsMap.set(key, { revenue: 0, expenses: 0 });
+        }
 
         appointmentsSnap.forEach(doc => {
           const d = doc.data();
@@ -86,16 +107,15 @@ const AdminDashboard = () => {
             date: d.date || '--',
             status: d.status || 'pending',
             service: d.service || 'غير محدد',
-            price: d.price || 0
+            price: d.price || visitPrice
           };
-          
           updates.push(updateItem);
 
-          if (d.status === 'done') {
-            done++;
-            const price = Number(d.price) || 0;
+          // Only count done and confirmed appointments for revenue
+          if (d.status === 'done' || d.status === 'confirmed') {
+            const price = d.price ? Number(d.price) : visitPrice;
             totalRevenue += price;
-
+            if (d.status === 'done') done++;
             // Track service stats
             const serviceName = d.service || 'غير محدد';
             if (servicesMap.has(serviceName)) {
@@ -109,6 +129,15 @@ const AdminDashboard = () => {
                 count: 1,
                 revenue: price
               });
+            }
+            // Track by month
+            if (d.date) {
+              const dateObj = new Date(d.date);
+              const key = `${dateObj.getFullYear()}-${dateObj.getMonth() + 1}`;
+              if (monthsMap.has(key)) {
+                const m = monthsMap.get(key)!;
+                monthsMap.set(key, { ...m, revenue: m.revenue + price });
+              }
             }
           }
         });
@@ -124,34 +153,56 @@ const AdminDashboard = () => {
         })).sort((a, b) => b.revenue - a.revenue);
         setServiceStats(servicesArray);
 
-        // Fetch expenses
+        // Fetch expenses and map to months
         const expensesSnap = await getDocs(collection(db, 'expenses'));
         let totalExpenses = 0;
         expensesSnap.forEach(doc => {
           const d = doc.data();
-          totalExpenses += Number(d.amount) || 0;
+          const amount = Number(d.amount) || 0;
+          totalExpenses += amount;
+          if (d.date) {
+            const dateObj = new Date(d.date);
+            const key = `${dateObj.getFullYear()}-${dateObj.getMonth() + 1}`;
+            if (monthsMap.has(key)) {
+              const m = monthsMap.get(key)!;
+              monthsMap.set(key, { ...m, expenses: m.expenses + amount });
+            }
+          }
         });
         setExpenses(totalExpenses);
 
-        // Generate chart data (replace with real data)
-        const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
-        const currentYear = new Date().getFullYear();
-        const chartData = months.map((month, index) => ({
-          name: month,
-          الإيرادات: Math.floor(Math.random() * 20000) + 10000,
-          المصروفات: Math.floor(Math.random() * 10000) + 3000,
-          profit: Math.floor(Math.random() * 15000) + 5000
-        }));
-        setChartData(chartData);
-
+        // Prepare chart data for last 6 months
+        const monthsLabels = [];
+        const monthsData: ChartDatum[] = [];
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthName = d.toLocaleString('ar-EG', { month: 'long' });
+          const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+          const m = monthsMap.get(key) || { revenue: 0, expenses: 0 };
+          monthsLabels.push(monthName);
+          monthsData.push({ name: monthName, الإيرادات: m.revenue, المصروفات: m.expenses });
+        }
+        setChartData(monthsData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
+  }, []);
+
+  // Protect route for regular users
+  React.useEffect(() => {
+    const userStr = localStorage.getItem("currentUser");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role === "user" && !window.location.pathname.includes("/admin/appointments")) {
+          window.location.href = "/admin/appointments";
+        }
+      } catch (e) { /* ignore */ }
+    }
   }, []);
 
   // Chart configurations
@@ -253,7 +304,7 @@ const AdminDashboard = () => {
     <AdminLayout>
       <div
         className="p-1 sm:p-3 md:p-8 w-full max-w-full mx-auto space-y-2 sm:space-y-6 md:space-y-8 overflow-x-hidden"
-        style={{ maxWidth: '400px', width: '100%' }}
+        style={{ width: '100%', maxWidth: '100vw', minWidth: '380px' }}
       >
         {/* Header with Search */}
         <motion.div 

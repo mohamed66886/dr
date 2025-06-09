@@ -37,13 +37,10 @@ const AdminHeader = () => {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Here you would typically call your logout API
-      // await authService.logout();
-      
-      // Clear user data
       localStorage.removeItem("currentUser");
       localStorage.removeItem("authToken");
-      navigate('/login');
+      // منع الرجوع للخلف بعد تسجيل الخروج
+      window.location.replace('/login');
       toast({ title: "تم تسجيل الخروج بنجاح" });
     } catch (error) {
       console.error("Logout failed:", error);
@@ -62,6 +59,14 @@ const AdminHeader = () => {
             {isMobile && (
               <SidebarTrigger className="text-white md:hidden mr-2 focus:outline-none focus:ring-2 focus:ring-blue-200/60" />
             )}
+            {/* زر الرجوع للموقع */}
+            <button
+              onClick={() => window.location.href = '/'}
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-tr from-blue-400 to-primary-500 shadow-lg border border-white/20 hover:scale-105 transition-transform"
+              title="العودة للموقع"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="text-white text-2xl" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" /></svg>
+            </button>
             <div className="flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-tr from-blue-400 to-primary-500 shadow-lg border border-white/20">
               <FiUser className="text-white text-2xl" />
             </div>

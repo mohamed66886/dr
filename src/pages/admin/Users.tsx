@@ -23,8 +23,20 @@ type User = {
   name: string;
   email: string;
   password: string;
-  role: "admin" | "user";
+  allowedPages: string[]; // الصفحات المسموح بها
 };
+
+const PAGES = [
+  { value: 'dashboard', label: 'لوحة التحكم' },
+  { value: 'appointments', label: 'المواعيد' },
+  { value: 'services', label: 'الخدمات' },
+  { value: 'expenses', label: 'المصروفات' },
+  { value: 'users', label: 'المستخدمين' },
+  { value: 'reports', label: 'التقارير' },
+  { value: 'settings', label: 'الإعدادات' },
+  { value: 'financial-year', label: 'السنه المالية' },
+  { value: 'database', label: 'قاعدة البيانات' },
+];
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -37,9 +49,10 @@ const Users = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<User>({
-    defaultValues: { name: "", email: "", password: "", role: "user" }
+  const { register, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm<User>({
+    defaultValues: { name: "", email: "", password: "", allowedPages: [] }
   });
+  const allowedPagesWatch = watch("allowedPages");
 
   // التحقق من المصادقة وجلب البيانات
   useEffect(() => {
@@ -52,9 +65,14 @@ const Users = () => {
     const userStr = localStorage.getItem("currentUser");
     if (userStr) {
       try {
-        const user = JSON.parse(userStr);
+        let user = JSON.parse(userStr);
+        // إذا لم يكن لديه أي صلاحيات، اعتبره أدمن وأعطه كل الصلاحيات
+        if (!user.allowedPages || user.allowedPages.length === 0) {
+          user.allowedPages = PAGES.map(p => p.value);
+          localStorage.setItem("currentUser", JSON.stringify(user));
+        }
         setCurrentUser(user);
-        if (user.role === "user" && !window.location.pathname.includes("/admin/appointments")) {
+        if (!user.allowedPages?.includes("users") && !window.location.pathname.includes("/admin/appointments")) {
           window.location.href = "/admin/appointments";
         }
       } catch {
@@ -74,7 +92,7 @@ const Users = () => {
             name: data.name || "",
             email: data.email || "",
             password: data.password || "",
-            role: data.role === "admin" ? "admin" : "user"
+            allowedPages: data.allowedPages || []
           };
         }));
       } catch (e) {
@@ -104,7 +122,7 @@ const Users = () => {
   // تعديل مستخدم
   const handleEdit = (user: User) => {
     setEditId(user.id!);
-    setEditData({ name: user.name, email: user.email, role: user.role });
+    setEditData({ name: user.name, email: user.email, allowedPages: user.allowedPages });
   };
 
   const handleEditSave = async (id: string) => {
@@ -138,8 +156,8 @@ const Users = () => {
     }
   };
 
-  // إذا كان المستخدم عاديًا، عرض واجهة المواعيد فقط
-  if (currentUser && currentUser.role === "user") {
+  // إذا كان المستخدم الحالي لا يملك صلاحية رؤية صفحة المستخدمين، عرض رسالة فقط
+  if (currentUser && !currentUser.allowedPages?.includes("users")) {
     return (
       <AdminLayout>
         <div className="p-8">
@@ -149,14 +167,14 @@ const Users = () => {
             className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2"
           >
             <FiCalendar className="text-dental-blue" />
-            <span>المواعيد الخاصة بك</span>
+            <span>ليس لديك صلاحية لرؤية هذه الصفحة</span>
           </motion.h2>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="bg-white rounded-xl shadow-md p-6"
           >
-            <p>يمكنك هنا رؤية المواعيد الخاصة بك فقط.</p>
+            <p>يرجى التواصل مع الإدارة لإعطائك صلاحية الوصول.</p>
           </motion.div>
         </div>
       </AdminLayout>
@@ -262,14 +280,32 @@ const Users = () => {
                   {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">الصلاحية</label>
-                  <select
-                    {...register("role")}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-dental-blue focus:border-transparent"
-                  >
-                    <option value="user">مستخدم عادي</option>
-                    <option value="admin">مدير النظام</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">الصفحات المسموح بها</label>
+                  <div className="flex flex-col gap-1">
+                    {PAGES.map(page => (
+                      <label key={page.value} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          value={page.value}
+                          {...register("allowedPages")}
+                          checked={allowedPagesWatch?.includes(page.value) || false}
+                          onChange={e => {
+                            const checked = e.target.checked;
+                            const value = e.target.value;
+                            let newPages = allowedPagesWatch ? [...allowedPagesWatch] : [];
+                            if (checked) {
+                              newPages.push(value);
+                            } else {
+                              newPages = newPages.filter(v => v !== value);
+                            }
+                            setValue("allowedPages", newPages);
+                          }}
+                        />
+                        {page.label}
+                      </label>
+                    ))}
+                  </div>
+                  {errors.allowedPages && <p className="mt-1 text-sm text-red-600">يجب اختيار صفحة واحدة على الأقل</p>}
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row justify-end gap-2">
@@ -316,7 +352,7 @@ const Users = () => {
                       <tr>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الاسم</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">البريد الإلكتروني</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الصلاحية</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الصفحات المسموح بها</th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الإجراءات</th>
                       </tr>
                     </thead>
@@ -348,14 +384,28 @@ const Users = () => {
                                   />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <select
-                                    value={editData.role || 'user'}
-                                    onChange={(e) => setEditData({ ...editData, role: e.target.value as 'admin' | 'user' })}
-                                    className="border border-gray-300 rounded-lg px-3 py-1 w-full focus:ring-2 focus:ring-dental-blue focus:border-transparent"
-                                  >
-                                    <option value="user">مستخدم عادي</option>
-                                    <option value="admin">مدير النظام</option>
-                                  </select>
+                                  <div className="flex flex-wrap gap-2">
+                                    {PAGES.map(page => (
+                                      <label key={page.value} className="flex items-center gap-1 text-xs">
+                                        <input
+                                          type="checkbox"
+                                          checked={editData.allowedPages?.includes(page.value) || false}
+                                          onChange={e => {
+                                            const checked = e.target.checked;
+                                            const value = page.value;
+                                            let newPages = editData.allowedPages ? [...editData.allowedPages] : [];
+                                            if (checked) {
+                                              newPages.push(value);
+                                            } else {
+                                              newPages = newPages.filter(v => v !== value);
+                                            }
+                                            setEditData({ ...editData, allowedPages: newPages });
+                                          }}
+                                        />
+                                        {page.label}
+                                      </label>
+                                    ))}
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap flex gap-2">
                                   <motion.button
@@ -387,23 +437,16 @@ const Users = () => {
                                   {user.email}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    user.role === 'admin' 
-                                      ? 'bg-purple-100 text-purple-800 flex items-center gap-1'
-                                      : 'bg-blue-100 text-blue-800 flex items-center gap-1'
-                                  }`}>
-                                    {user.role === 'admin' ? (
-                                      <>
-                                        <FiShield size={12} />
-                                        <span>مدير النظام</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <FiUser size={12} />
-                                        <span>مستخدم عادي</span>
-                                      </>
-                                    )}
-                                  </span>
+                                  <div className="flex flex-wrap gap-1">
+                                    {user.allowedPages?.length ? user.allowedPages.map(pageKey => {
+                                      const pageObj = PAGES.find(p => p.value === pageKey);
+                                      return (
+                                        <span key={pageKey} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                          {pageObj ? pageObj.label : pageKey}
+                                        </span>
+                                      );
+                                    }) : <span className="text-xs text-gray-400">لا يوجد</span>}
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap flex gap-2">
                                   <motion.button
@@ -459,14 +502,28 @@ const Users = () => {
                               className="border border-gray-300 rounded-lg px-3 py-1 w-full focus:ring-2 focus:ring-dental-blue focus:border-transparent mb-1"
                               placeholder="البريد الإلكتروني"
                             />
-                            <select
-                              value={editData.role || 'user'}
-                              onChange={(e) => setEditData({ ...editData, role: e.target.value as 'admin' | 'user' })}
-                              className="border border-gray-300 rounded-lg px-3 py-1 w-full focus:ring-2 focus:ring-dental-blue focus:border-transparent mb-2"
-                            >
-                              <option value="user">مستخدم عادي</option>
-                              <option value="admin">مدير النظام</option>
-                            </select>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {PAGES.map(page => (
+                                <label key={page.value} className="flex items-center gap-1 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={editData.allowedPages?.includes(page.value) || false}
+                                    onChange={e => {
+                                      const checked = e.target.checked;
+                                      const value = page.value;
+                                      let newPages = editData.allowedPages ? [...editData.allowedPages] : [];
+                                      if (checked) {
+                                        newPages.push(value);
+                                      } else {
+                                        newPages = newPages.filter(v => v !== value);
+                                      }
+                                      setEditData({ ...editData, allowedPages: newPages });
+                                    }}
+                                  />
+                                  {page.label}
+                                </label>
+                              ))}
+                            </div>
                             <div className="flex gap-2">
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
@@ -492,24 +549,15 @@ const Users = () => {
                           <>
                             <div className="font-medium text-sm text-gray-900">{user.name}</div>
                             <div className="text-xs text-gray-500">{user.email}</div>
-                            <div className="mb-1">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                user.role === 'admin'
-                                  ? 'bg-purple-100 text-purple-800 flex items-center gap-1'
-                                  : 'bg-blue-100 text-blue-800 flex items-center gap-1'
-                              }`}>
-                                {user.role === 'admin' ? (
-                                  <>
-                                    <FiShield size={12} />
-                                    <span>مدير النظام</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <FiUser size={12} />
-                                    <span>مستخدم عادي</span>
-                                  </>
-                                )}
-                              </span>
+                            <div className="mb-1 flex flex-wrap gap-1">
+                              {user.allowedPages?.length ? user.allowedPages.map(pageKey => {
+                                const pageObj = PAGES.find(p => p.value === pageKey);
+                                return (
+                                  <span key={pageKey} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    {pageObj ? pageObj.label : pageKey}
+                                  </span>
+                                );
+                              }) : <span className="text-xs text-gray-400">لا يوجد</span>}
                             </div>
                             <div className="flex gap-2 mt-1">
                               <motion.button

@@ -100,9 +100,7 @@ const ServicesAdmin = () => {
         if (user.role === "user" && !window.location.pathname.includes("/admin/appointments")) {
           window.location.href = "/admin/appointments";
         }
-      } catch (e) {
-        console.error("Error parsing user data:", e);
-      }
+      } catch (e) { /* ignore */ }
     }
   }, []);
 

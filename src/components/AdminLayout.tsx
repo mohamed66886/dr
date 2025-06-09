@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarInset, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, SidebarTrigger } from '@/components/ui/sidebar';
 import { Link, useLocation } from 'react-router-dom';
@@ -91,6 +91,41 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const { clinicName } = useClinicName();
+  const [currentUser, setCurrentUser] = useState<{ allowedPages?: string[] } | null>(null);
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem("currentUser");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setCurrentUser(user);
+      }
+    } catch {
+      setCurrentUser(null);
+    }
+  }, []);
+
+  // دالة استخراج مفتاح الصفحة من المسار
+  function getPageKeyFromPath(path: string) {
+    if (path.includes('dashboard')) return 'dashboard';
+    if (path.includes('appointments')) return 'appointments';
+    if (path.includes('users')) return 'users';
+    if (path.includes('reports')) return 'reports';
+    if (path.includes('settings')) return 'settings';
+    // أضف المزيد حسب الحاجة
+    return path.replace('/admin/', '');
+  }
+
+  // فلترة الروابط حسب صلاحيات المستخدم
+  const filteredLinks = currentUser && currentUser.allowedPages
+    ? adminLinks.filter(link => {
+        if (link.dropdown) {
+          // إذا كان أي عنصر فرعي مسموح يظهر القائمة الرئيسية
+          return link.dropdown.some(sub => currentUser.allowedPages.includes(getPageKeyFromPath(sub.to)));
+        }
+        return currentUser.allowedPages.includes(getPageKeyFromPath(link.to));
+      })
+    : adminLinks;
 
   const toggleSubmenu = (label: string) => {
     setOpenSubmenus(prev => ({
@@ -130,7 +165,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           
           <SidebarContent className='bg-dental-blue'>
             <SidebarMenu className="space-y-1">
-              {adminLinks.map((link, index) => (
+              {filteredLinks.map((link, index) => (
                 <motion.div
                   key={link.to || link.label}
                   initial={{ opacity: 0, x: 30 }}

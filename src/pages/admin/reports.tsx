@@ -18,6 +18,8 @@ const ReportsPage = () => {
   const [revenue, setRevenue] = useState<number>(0);
   const [confirmedAppointments, setConfirmedAppointments] = useState<number>(0);
   const [profit, setProfit] = useState<number>(0);
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,6 +60,10 @@ const ReportsPage = () => {
       let expenseSum = 0;
       expensesSnap.forEach(doc => {
         const d = doc.data();
+        if (fromDate && toDate) {
+          const date = d.date ? new Date(d.date) : null;
+          if (date && (date < new Date(fromDate) || date > new Date(toDate))) return;
+        }
         if (typeof d.amount === 'number') expenseSum += d.amount;
         else if (d.amount) expenseSum += parseFloat(d.amount);
       });
@@ -73,6 +79,10 @@ const ReportsPage = () => {
       let confirmedCount = 0;
       appointmentsSnap.forEach(doc => {
         const d = doc.data();
+        if (fromDate && toDate) {
+          const date = d.date ? new Date(d.date) : null;
+          if (date && (date < new Date(fromDate) || date > new Date(toDate))) return;
+        }
         if (d.status === 'confirmed') confirmedCount++;
       });
       setConfirmedAppointments(confirmedCount);
@@ -81,7 +91,7 @@ const ReportsPage = () => {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [fromDate, toDate]);
 
   return (
     <AdminLayout>
@@ -109,15 +119,27 @@ const ReportsPage = () => {
               <p className="text-gray-600 mt-2">شاهد ملخصات الأداء المالي والإداري للعيادة</p>
             </div>
             
-            <motion.div 
-              className="flex gap-3"
+            <motion.div
+              className="flex gap-3 flex-wrap"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all">
+              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
+                <label className="text-gray-700 text-sm">من:</label>
+                <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-sm" />
+              </div>
+              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
+                <label className="text-gray-700 text-sm">إلى:</label>
+                <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-sm" />
+              </div>
+              <button
+                className="flex items-center gap-2 bg-dental-blue hover:bg-dental-blue-dark text-white px-4 py-2 rounded-lg shadow-md transition-all"
+                onClick={() => {}}
+                disabled={loading}
+              >
                 <FiFilter />
-                <span>تصفية</span>
+                <span>تطبيق الفلتر</span>
               </button>
               <button className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all">
                 <FiCalendar />
@@ -178,15 +200,17 @@ const ReportsPage = () => {
                   <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
                     <FiUsers className="text-2xl" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-800">تقرير المستخدمين</h2>
+                  <h2 className="text-xl font-bold text-gray-800">تقرير الأرباح</h2>
                 </div>
                 <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full self-end">
-                  {loading ? '...' : userCount + ' مستخدم'}
+                  {loading ? '...' : profit.toLocaleString() + ' جنيه'}
                 </span>
-                <p className="text-gray-600">إحصائيات حول المستخدمين والنشاطات الإدارية</p>
+                <p className="text-gray-600">إجمالي الأرباح خلال الفترة المختارة</p>
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-xs text-gray-400">آخر تحديث: اليوم</span>
-                  <button className="px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:opacity-90 transition-opacity shadow-md">عرض التفاصيل</button>
+                  <button className="px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:opacity-90 transition-opacity shadow-md" onClick={() => navigate('/admin/profit-report')}>
+  عرض التفاصيل
+</button>
                 </div>
               </div>
             </motion.div>

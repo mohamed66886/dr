@@ -11,6 +11,22 @@ const Header = () => {
   const navigate = useNavigate();
   const [logoClickCount, setLogoClickCount] = useState(0);
 
+  // زر الرجوع للوحة تحكم الأدمن إذا كان المستخدم أدمن أو مستخدم مسجل دخول
+  type UserType = { role: string } | null;
+  const [currentUser, setCurrentUser] = useState<UserType>(null);
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem("currentUser");
+      if (userStr) {
+        setCurrentUser(JSON.parse(userStr));
+      } else {
+        setCurrentUser(null);
+      }
+    } catch {
+      setCurrentUser(null);
+    }
+  }, [location]);
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -96,11 +112,11 @@ const Header = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
+            className="flex items-center gap-2"
           >
             <Link to="/" className="flex items-center space-x-2 space-x-reverse"
               onClick={e => {
                 setLogoClickCount(c => c + 1);
-                // allow normal navigation
               }}
             >
               <motion.div 
@@ -152,6 +168,16 @@ const Header = () => {
                 <p className="text-sm text-gray-600">طبيب الأسنان</p>
               </div>
             </Link>
+            {/* زر الرجوع للوحة تحكم الأدمن */}
+            {currentUser && (
+              <button
+                onClick={() => window.location.href = currentUser.role === 'admin' ? '/admin/Dashboard' : '/admin/appointments'}
+                className="ml-2 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow border border-primary/30 hover:scale-105 transition-transform"
+                title="الذهاب للوحة التحكم"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="text-white text-xl" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9.75 7M9.75 7L7 9.75M9.75 7L12.5 9.75" /></svg>
+              </button>
+            )}
           </motion.div>
 
           {/* Desktop Navigation */}
