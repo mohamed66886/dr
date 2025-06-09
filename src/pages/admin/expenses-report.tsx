@@ -36,6 +36,7 @@ const ExpensesReportPage = () => {
   const [filtered, setFiltered] = useState<Expense[]>([]);
   const [expenseTypeNames, setExpenseTypeNames] = useState<Record<string, string>>({});
   const [totalAmount, setTotalAmount] = useState(0);
+  const [expandedTypes, setExpandedTypes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
@@ -144,6 +145,19 @@ const ExpensesReportPage = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
     return format(new Date(dateString), 'yyyy/MM/dd', { locale: arSA });
+  };
+
+  // تجميع المصروفات حسب النوع
+  const groupedExpenses = filtered.reduce<Record<string, Expense[]>>((acc, exp) => {
+    if (!acc[exp.type]) acc[exp.type] = [];
+    acc[exp.type].push(exp);
+    return acc;
+  }, {});
+
+  const handleToggleType = (type: string) => {
+    setExpandedTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
   };
 
   return (
@@ -298,18 +312,17 @@ const ExpensesReportPage = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">التاريخ</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">النوع</th>
-                  {/* <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الوصف</th> */}
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ملاحظات</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المبلغ</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المجموع الكلي</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عدد العمليات</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تفاصيل</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 <AnimatePresence>
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center">
+                      <td colSpan={5} className="px-6 py-8 text-center">
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -320,41 +333,63 @@ const ExpensesReportPage = () => {
                         </motion.div>
                       </td>
                     </tr>
-                  ) : filtered.length === 0 ? (
+                  ) : Object.keys(groupedExpenses).length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                         لا توجد بيانات متاحة للعرض
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((exp, i) => (
-                      <motion.tr
-                        key={exp.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{i + 1}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(exp.date)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            exp.type === 'direct' ? 'bg-green-100 text-green-800' : 
-                            exp.type === 'indirect' ? 'bg-purple-100 text-purple-800' : 
-                            'bg-blue-100 text-blue-800'
-                          }`}>
-                            {getExpenseTypeLabel(exp.type)}
-                          </span>
-                        </td>
-                        {/* <td className="px-6 py-4 text-sm text-gray-900">{exp.description}</td> */}
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                          {exp.notes || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                          {exp.amount.toLocaleString()} جنيه
-                        </td>
-                      </motion.tr>
+                    Object.entries(groupedExpenses).map(([typeKey, exps], idx) => (
+                      <React.Fragment key={typeKey}>
+                        <tr
+                          className="bg-gray-50 cursor-pointer hover:bg-blue-50"
+                          onClick={() => handleToggleType(typeKey)}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{idx + 1}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">{getExpenseTypeLabel(typeKey)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-blue-700">{exps.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} جنيه</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{exps.length}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <button className="text-dental-blue underline">
+                              {expandedTypes.includes(typeKey) ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
+                            </button>
+                          </td>
+                        </tr>
+                        <AnimatePresence>
+                          {expandedTypes.includes(typeKey) && (
+                            <motion.tr
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <td colSpan={5} className="bg-white px-6 py-2">
+                                <table className="w-full text-sm border">
+                                  <thead>
+                                    <tr>
+                                      <th className="px-2 py-1">#</th>
+                                      <th className="px-2 py-1">التاريخ</th>
+                                      <th className="px-2 py-1">ملاحظات</th>
+                                      <th className="px-2 py-1">المبلغ</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {exps.map((exp, i) => (
+                                      <tr key={exp.id} className="border-t">
+                                        <td className="px-2 py-1">{i + 1}</td>
+                                        <td className="px-2 py-1">{formatDate(exp.date)}</td>
+                                        <td className="px-2 py-1">{exp.notes || '-'}</td>
+                                        <td className="px-2 py-1 text-red-600">{exp.amount.toLocaleString()} جنيه</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </td>
+                            </motion.tr>
+                          )}
+                        </AnimatePresence>
+                      </React.Fragment>
                     ))
                   )}
                 </AnimatePresence>
