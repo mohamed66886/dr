@@ -48,7 +48,11 @@ const DirectExpenses = () => {
     return expenses.slice(start, start + rowsPerPage);
   }, [expenses, page]);
   const totalAmount = useMemo(() => expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0), [expenses]);
-  const [expenseCategory, setExpenseCategory] = useState<'direct' | 'indirect'>('direct');
+  const [expenseCategory, setExpenseCategory] = useState<'direct' | 'indirect'>(() => {
+    const saved = localStorage.getItem('expenseCategory');
+    return saved === 'direct' || saved === 'indirect' ? saved : 'direct';
+  });
+  const [financialYear, setFinancialYear] = useState<{from: string, to: string} | null>(null);
 
   useEffect(() => {
     const fetchExpenseTypes = async () => {
@@ -106,12 +110,55 @@ const DirectExpenses = () => {
     fetchExpenses();
   }, [loading, expenseCategory]);
 
+  // جلب السنة المالية الحالية عند تحميل الصفحة
+  useEffect(() => {
+    const fetchFinancialYear = async () => {
+      const q = await getDocs(collection(db, 'financialYears'));
+      // نأخذ آخر سنة مالية (أو يمكنك التعديل حسب الحاجة)
+      const years = q.docs.map(d => d.data());
+      if (years.length > 0) {
+        // ترتيب حسب from تنازليًا
+        years.sort((a, b) => new Date(b.from).getTime() - new Date(a.from).getTime());
+        setFinancialYear({ from: years[0].from, to: years[0].to });
+      }
+    };
+    fetchFinancialYear();
+  }, []);
+
+  const isDateInFinancialYear = (date: string) => {
+    if (!financialYear) return true; // إذا لم توجد سنة مالية لا نمنع
+    return date >= financialYear.from && date <= financialYear.to;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     if (!type) {
       toast.error('يجب اختيار نوع المصروف', { position: 'top-center' });
       setLoading(false);
+      return;
+    }
+    if (!isDateInFinancialYear(date)) {
+      setLoading(false);
+      setTimeout(() => {
+        const form = document.querySelector('form');
+        if (form) {
+          const msg = document.createElement('div');
+          msg.className = 'flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-lg mt-3 animate-fade-in-up';
+          msg.style.direction = 'rtl';
+          msg.innerHTML = `
+            <svg class='text-red-500 text-xl' style='width:22px;height:22px' fill='none' stroke='currentColor' stroke-width='2' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' stroke='currentColor' stroke-width='2'></circle><path stroke='currentColor' stroke-width='2' d='M8 12h8m-4-4v8'></path></svg>
+            <div>
+              <div class='font-bold'>تاريخ المصروف خارج السنة المالية</div>
+              <div class='text-sm'>يجب أن يكون التاريخ بين ${financialYear?.from} و ${financialYear?.to}</div>
+            </div>
+            <button type='button' class='ml-auto text-red-400 hover:text-red-600 text-lg close-msg'>×</button>
+          `;
+          form.prepend(msg);
+          msg.querySelector('.close-msg')?.addEventListener('click', () => msg.remove());
+          setTimeout(() => msg.remove(), 5000);
+        }
+      }, 100);
       return;
     }
     const selectedType = expenseTypes.find(t => t.value === type);
@@ -135,7 +182,7 @@ const DirectExpenses = () => {
       setAmount('');
       setType('');
       setNotes('');
-      setExpenseCategory('direct');
+      // لا تعيد تعيين التصنيف هنا حتى لا يتغير تلقائياً بعد الإضافة
     } catch (error) {
       toast.error('حدث خطأ أثناء إضافة المصروف', {
         position: 'top-center',
@@ -200,6 +247,13 @@ const DirectExpenses = () => {
   // فلترة أنواع المصروفات حسب التصنيف
   const filteredExpenseTypes = expenseTypes.filter(t => expenseCategory === 'direct' ? t.isDirect : t.isDirect === false);
 
+  // عند تغيير التصنيف، احفظه في localStorage
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as 'direct' | 'indirect';
+    setExpenseCategory(value);
+    localStorage.setItem('expenseCategory', value);
+  };
+
   // إعادة تعيين نوع المصروف عند تغيير التصنيف
   useEffect(() => {
     setType('');
@@ -247,7 +301,7 @@ const DirectExpenses = () => {
                   <select
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-dental-blue focus:border-dental-blue outline-none transition"
                     value={expenseCategory}
-                    onChange={e => setExpenseCategory(e.target.value as 'direct' | 'indirect')}
+                    onChange={handleCategoryChange}
                     required
                   >
                     <option value="direct">مباشر</option>

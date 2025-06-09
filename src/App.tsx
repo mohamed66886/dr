@@ -23,6 +23,7 @@ import SettingsAdmin from "./pages/admin/settings";
 import DirectExpenses from "./pages/admin/expenses-direct";
 import ReportsPage from "./pages/admin/reports";
 import ExpensesReportPage from "./pages/admin/expenses-report";
+import FinancialYearPage from "./pages/admin/financial-year";
 import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => {
               <Route path="/admin/expenses/direct" element={<AdminRoute><DirectExpenses /></AdminRoute>} />
               <Route path="/admin/reports" element={<AdminRoute><ReportsPage /></AdminRoute>} />
               <Route path="/admin/expenses-report" element={<AdminRoute><ExpensesReportPage /></AdminRoute>} />
+              <Route path="/admin/financial-year" element={<AdminRoute><FinancialYearPage /></AdminRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

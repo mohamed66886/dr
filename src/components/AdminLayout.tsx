@@ -70,6 +70,14 @@ const adminLinks = [
     label: 'الإعدادات',
     icon: <FiSettings className="text-lg" />
   },
+  {
+    to : '/admin/financial-year',
+    label: 'السنه المالية',
+    icon: <FiPieChart className="text-lg" />
+
+
+
+  }
 ];
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
