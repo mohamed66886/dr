@@ -132,7 +132,7 @@ const AdminDashboard = () => {
 
           // Only count done and confirmed appointments for revenue
           if (d.status === 'done' || d.status === 'confirmed') {
-            const price = d.price ? Number(d.price) : visitPrice;
+            const price = d.price ? Number(d.price) : 0;
             totalRevenue += price;
             if (d.status === 'done') done++;
             // Track service stats

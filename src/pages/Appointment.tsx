@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,7 @@ import {
 import { MdOutlineWork } from 'react-icons/md';
 import html2pdf from 'html2pdf.js';
 import QRCode from 'qrcode';
-import { addDoc, collection, doc, getDoc } from 'firebase/firestore';
+import { addDoc, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
 
 // Animation variants
@@ -52,7 +52,7 @@ const Appointment = () => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [lastData, setLastData] = useState<typeof formData | null>(null);
+  const [lastData, setLastData] = useState<any>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [clinicInfo, setClinicInfo] = useState({
     name: 'عيادة د. محمد رشاد لطب الأسنان',
@@ -72,6 +72,49 @@ const Appointment = () => {
     ]
   });
   const [showPrice, setShowPrice] = useState(false);
+  const [services, setServices] = useState<{ id: string; title: string; price: number }[]>([]);
+  const [selectedServicePrice, setSelectedServicePrice] = useState<number | null>(null);
+  const [workTimeWarning, setWorkTimeWarning] = useState<string | null>(null);
+  const [selectedDayName, setSelectedDayName] = useState<string | null>(null);
+  const [arabicDay, setArabicDay] = useState<string | null>(null);
+  const [dateWarning, setDateWarning] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [nextDateForDay, setNextDateForDay] = useState<string | null>(null);
+
+  // استخراج الأيام المتاحة فقط (بدون أيام مغلقة) بشكل ديناميكي
+  const availableDays = useMemo(() => {
+    if (!clinicInfo.workingHours || !Array.isArray(clinicInfo.workingHours)) return [];
+    // إصلاح: تجاهل أي عنصر ليس له day أو time
+    return clinicInfo.workingHours
+      .filter((wh) => wh && typeof wh.day === 'string' && wh.time && !wh.time.includes('مغلق'))
+      .flatMap((wh) => wh.day.split(',').map((s) => s.replace(/يوم /g, '').trim()))
+      .filter((v, i, arr) => v && arr.indexOf(v) === i); // إزالة التكرار وتجاهل الفراغات
+  }, [clinicInfo.workingHours]);
+
+  // دالة لحساب أقرب تاريخ قادم ليوم معين
+  const getNextDateForDay = (arabicDay: string) => {
+    const weekDays = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const today = new Date();
+    const todayIdx = today.getDay();
+    const targetIdx = weekDays.indexOf(arabicDay);
+    if (targetIdx === -1) return null;
+    let diff = targetIdx - todayIdx;
+    if (diff < 0) diff += 7;
+    // إذا اليوم هو نفسه اليوم الحالي، نسمح بالحجز اليوم دائماً
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + diff);
+    return nextDate.toISOString().split('T')[0];
+  };
+
+  // عند اختيار اليوم من الدروب داون
+  const handleDaySelect = (day: string) => {
+    setSelectedDay(day);
+    const nextDate = getNextDateForDay(day);
+    setNextDateForDay(nextDate);
+    setFormData((prev) => ({ ...prev, date: nextDate || '' }));
+    setArabicDay(day);
+    setDateWarning(null);
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -98,24 +141,67 @@ const Appointment = () => {
         // يمكن إضافة لوج أو رسالة خطأ هنا إذا رغبت
       }
     };
+    const fetchServices = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'services'));
+        const servicesList = querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            title: data.title || '',
+            price: typeof data.price === 'number' ? data.price : Number(data.price) || 0
+          };
+        });
+        setServices(servicesList);
+      } catch (e) {
+        // يمكن إضافة لوج أو رسالة خطأ هنا إذا رغبت
+      }
+    };
     fetchSettings();
+    fetchServices();
   }, []);
 
-  const services = [
-    'تبييض الأسنان',
-    'تنظيف الأسنان',
-    'زراعة الأسنان',
-    'تقويم الأسنان',
-    'حشوات تجميلية',
-    'علاج الجذور',
-    'خدمة أخرى'
-  ];
+  // دالة لتوليد الأوقات المتاحة من فترة العمل (مثلاً: 9:00 ص - 5:00 م)
+  const generateTimeSlotsFromWorkingHours = (selectedDay: string | null) => {
+    if (!selectedDay || !clinicInfo.workingHours) return [];
+    // ابحث عن فترة العمل لليوم المختار
+    let workTimeStr = '';
+    for (const wh of clinicInfo.workingHours) {
+      if (!wh.day || !wh.time) continue;
+      const whDays = wh.day.split(',').map((d: string) => d.replace(/يوم /g, '').trim());
+      if (whDays.includes(selectedDay)) {
+        workTimeStr = wh.time;
+        break;
+      }
+    }
+    if (!workTimeStr || workTimeStr.includes('مغلق')) return [];
+    const [from, to] = workTimeStr.split('-').map(s => s.trim());
+    if (!from || !to) return [];
+    // تحويل الوقت إلى دقائق
+    const parseTime = (t: string) => {
+      const [h, m] = t.split(':');
+      let hour = parseInt(h);
+      const minute = parseInt(m);
+      if (t.includes('م') && hour < 12) hour += 12;
+      if (t.includes('ص') && hour === 12) hour = 0;
+      return hour * 60 + minute;
+    };
+    const start = parseTime(from);
+    const end = parseTime(to);
+    // توليد الأوقات كل نصف ساعة
+    const slots: string[] = [];
+    for (let t = start; t <= end; t += 30) {
+      const hour = Math.floor(t / 60);
+      const minute = t % 60;
+      const period = hour >= 12 ? 'م' : 'ص';
+      const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+      slots.push(`${displayHour}:${minute.toString().padStart(2, '0')} ${period}`);
+    }
+    return slots;
+  };
 
-  const timeSlots = [
-    '9:00 ص', '10:00 ص', '11:00 ص', '12:00 م',
-    '2:00 م', '3:00 م', '4:00 م', '5:00 م',
-    '6:00 م', '7:00 م', '8:00 م'
-  ];
+  // استبدال timeSlots الثابتة
+  const timeSlots = useMemo(() => generateTimeSlotsFromWorkingHours(selectedDay), [clinicInfo.workingHours, selectedDay]); // eslint-disable-line
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,8 +214,11 @@ const Appointment = () => {
       return;
     }
     try {
-      await addDoc(collection(db, 'appointments'), formData);
-      setLastData(formData);
+      // جلب سعر الخدمة المختارة
+      const selectedService = services.find(s => s.title === formData.service);
+      const price = selectedService ? selectedService.price : clinicInfo.price;
+      await addDoc(collection(db, 'appointments'), { ...formData, price });
+      setLastData({ ...formData, price });
       setSubmitted(true);
       toast({
         title: "تم إرسال طلبك بنجاح",
@@ -147,9 +236,11 @@ const Appointment = () => {
 
 const handleGeneratePDF = async () => {
     setPdfLoading(true);
-    
+    // جلب سعر الخدمة المختارة
+    const selectedService = services.find(s => s.title === lastData?.service);
+    const servicePrice = selectedService ? selectedService.price : clinicInfo.price;
     // Generate QR code with clinic logo or icon
-    const qrData = `عيادة د. محمد رشاد\nمعلومات الحجز:\nالاسم: ${lastData?.name}\nالجوال: ${lastData?.phone}\nالخدمة: ${lastData?.service}\nالتاريخ: ${lastData?.date}\nالوقت: ${lastData?.time}\nسعر الكشف: ${clinicInfo.price}`;
+    const qrData = `عيادة د. محمد رشاد\nمعلومات الحجز:\nالاسم: ${lastData?.name}\nالجوال: ${lastData?.phone}\nالخدمة: ${lastData?.service}\nالتاريخ: ${lastData?.date}\nالوقت: ${lastData?.time}\nسعر الخدمة: ${servicePrice}`;
     const qrImage = await QRCode.toDataURL(qrData, { 
         width: 150,
         margin: 2,
@@ -428,8 +519,8 @@ const handleGeneratePDF = async () => {
                             ${icons.info}
                         </div>
                         <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">سعر الكشف</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${clinicInfo.price ? clinicInfo.price + ' جنيه' : 'غير محدد'}</p>
+                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">سعر الخدمة</p>
+                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${servicePrice ? servicePrice + ' جنيه' : 'غير محدد'}</p>
                         </div>
                     </div>
                 </div>
@@ -575,12 +666,135 @@ const handleGeneratePDF = async () => {
     }
 };
 
+  const isTimeWithinWorkingHours = (dateStr: string, timeStr: string) => {
+    if (!dateStr || !timeStr || !clinicInfo.workingHours || !Array.isArray(clinicInfo.workingHours)) return true;
+    try {
+      const dateObj = new Date(dateStr);
+      const dayOfWeekIdx = dateObj.getDay();
+      const weekDaysArr = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      const arabicDayStr = weekDaysArr[dayOfWeekIdx];
+      let found = false;
+      let workTimeStr = '';
+      for (const wh of clinicInfo.workingHours) {
+        const whDays = wh.day.split(',').map(d => d.trim());
+        if (whDays.includes(arabicDayStr)) {
+          found = true;
+          workTimeStr = wh.time;
+          break;
+        }
+      }
+      if (!found) return false;
+      if (!workTimeStr || workTimeStr.includes('مغلق')) return false;
+      const [from, to] = workTimeStr.split('-').map(s => s.trim());
+      if (!from || !to) return true;
+      const parseTime = (t: string) => {
+        const [h, m] = t.split(':');
+        let hour = parseInt(h);
+        const minute = parseInt(m);
+        if (t.includes('م') && hour < 12) hour += 12;
+        if (t.includes('ص') && hour === 12) hour = 0;
+        return hour * 60 + minute;
+      };
+      const selectedTime = parseTime(timeStr);
+      const startTime = parseTime(from);
+      const endTime = parseTime(to);
+      return selectedTime >= startTime && selectedTime <= endTime;
+    } catch {
+      return true;
+    }
+  };
+
+  // تحديث isDateAvailable ليعالج مشكلة الفراغات الزائدة ويطابق اليوم بدقة
+  const isDateAvailable = (dateStr: string) => {
+    if (!dateStr || !clinicInfo.workingHours || !Array.isArray(clinicInfo.workingHours)) return true;
+    const dateObj = new Date(dateStr);
+    const dayOfWeekIdx = dateObj.getDay();
+    const weekDaysArr = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const arabicDayStr = weekDaysArr[dayOfWeekIdx].replace(/يوم /g, '').trim();
+    let found = false;
+    let workTimeStr = '';
+    for (const wh of clinicInfo.workingHours) {
+      let whDays: string[] = [];
+      if (Array.isArray(wh.day)) {
+        whDays = wh.day.map((d: string) => d.replace(/يوم /g, '').trim());
+      } else if (typeof wh.day === 'string') {
+        whDays = wh.day.split(',').map((d: string) => d.replace(/يوم /g, '').trim());
+      }
+      if (whDays.some(d => d === arabicDayStr)) {
+        found = true;
+        workTimeStr = wh.time;
+        break;
+      }
+    }
+    if (!found) return false;
+    if (!workTimeStr || workTimeStr.includes('مغلق')) return false;
+    return true;
+  };
+
+  const getArabicDayName = (dateStr: string) => {
+    if (!dateStr) return null;
+    const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const d = new Date(dateStr);
+    return days[d.getDay()];
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    if (field === 'date') {
+      setArabicDay(getArabicDayName(value));
+      if (!isDateAvailable(value)) {
+        setFormData(prev => ({ ...prev, date: '' }));
+        setArabicDay(null);
+        setDateWarning('اليوم المختار غير متاح للحجز. يرجى اختيار يوم آخر من أيام عمل العيادة.');
+        return;
+      } else {
+        setDateWarning(null);
+      }
+    }
+    if ((field === 'date' || field === 'time')) {
+      const d = field === 'date' ? value : formData.date;
+      const t = field === 'time' ? value : formData.time;
+      if (d && t) {
+        if (!isTimeWithinWorkingHours(d, t)) {
+          setWorkTimeWarning('الميعاد المختار خارج أوقات العمل الرسمية للعيادة. يرجى اختيار وقت آخر.');
+        } else {
+          setWorkTimeWarning(null);
+        }
+      }
+    }
   };
+
+  // استخراج الأيام المتاحة من workingHours
+  useEffect(() => {
+    if (clinicInfo.workingHours && Array.isArray(clinicInfo.workingHours)) {
+      const daysSet = new Set<string>();
+      clinicInfo.workingHours.forEach(wh => {
+        let whDays: string[] = [];
+        if (Array.isArray(wh.day)) {
+          whDays = wh.day.map((d: string) => d.replace(/يوم /g, '').trim());
+        } else if (typeof wh.day === 'string') {
+          whDays = wh.day.split(',').map((d: string) => d.replace(/يوم /g, '').trim());
+        }
+        whDays.forEach(d => {
+          if (d && !wh.time.includes('مغلق')) daysSet.add(d);
+        });
+      });
+    }
+  }, [clinicInfo.workingHours]);
+
+  useEffect(() => {
+    if (availableDays.length > 0 && !selectedDay) {
+      setSelectedDay(availableDays[0]);
+      const nextDate = getNextDateForDay(availableDays[0]);
+      setNextDateForDay(nextDate);
+      setFormData((prev) => ({ ...prev, date: nextDate || '' }));
+      setArabicDay(availableDays[0]);
+      setDateWarning(null);
+    }
+  }, [availableDays, selectedDay]);
 
   return (
     <div className="bg-white overflow-hidden">
@@ -670,40 +884,67 @@ const handleGeneratePDF = async () => {
                             <FaTooth className="text-dental-blue" />
                             نوع الخدمة *
                           </Label>
-                          <Select value={formData.service} onValueChange={(value) => { handleInputChange('service', value); setShowPrice(!!value); }}>
+                          <Select value={formData.service} onValueChange={(value) => {
+                            handleInputChange('service', value);
+                            const found = services.find(s => s.title === value);
+                            setSelectedServicePrice(found ? found.price : null);
+                            setShowPrice(!!value);
+                          }}>
                             <SelectTrigger className="mt-1">
                               <SelectValue placeholder="اختر نوع الخدمة" />
                             </SelectTrigger>
                             <SelectContent>
-                              {services.map((service, index) => (
-                                <SelectItem key={index} value={service}>
-                                  {service}
+                              {services.map((service) => (
+                                <SelectItem key={service.id} value={service.title}>
+                                  {service.title}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {showPrice && clinicInfo.price && (
+                          {formData.service && selectedServicePrice !== null && (
                             <div className="mt-2 text-dental-blue text-base font-semibold animate-fade-in">
-                              سعر الكشف: {clinicInfo.price} جنيه
+                              سعر الخدمة: {selectedServicePrice} جنيه
                             </div>
                           )}
                         </motion.div>
 
                         <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="date" className="text-gray-700 font-medium flex items-center gap-2">
+                            <Label htmlFor="day" className="text-gray-700 font-medium flex items-center gap-2">
                               <FaCalendarAlt className="text-dental-blue" />
-                              التاريخ المفضل *
+                              اليوم المتاح *
                             </Label>
-                            <Input
-                              id="date"
-                              type="date"
-                              value={formData.date}
-                              onChange={(e) => handleInputChange('date', e.target.value)}
-                              className="mt-1"
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                            />
+                            <Select value={selectedDay || ''} onValueChange={handleDaySelect} disabled={availableDays.length === 0}>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder={availableDays.length === 0 ? "لا توجد أيام متاحة" : "اختر اليوم"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableDays.length === 0 ? (
+                                  <div className="px-4 py-2 text-gray-500">لا توجد أيام عمل متاحة حالياً</div>
+                                ) : (
+                                  availableDays.map((day, idx) => (
+                                    <SelectItem key={idx} value={day}>
+                                      {day}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                            {selectedDay && nextDateForDay && (
+                              <div className="mt-2 text-dental-blue text-base font-semibold animate-fade-in">
+                                التاريخ القادم: {nextDateForDay}
+                              </div>
+                            )}
+                            {dateWarning && (
+                              <div className="mt-2 text-red-600 text-base font-semibold animate-fade-in">
+                                {dateWarning}
+                              </div>
+                            )}
+                            {availableDays.length === 0 && (
+                              <div className="mt-2 text-red-600 text-base font-semibold animate-fade-in">
+                                لم يتم العثور على أيام عمل متاحة. يرجى مراجعة إعدادات العيادة أو المحاولة لاحقاً.
+                              </div>
+                            )}
                           </div>
 
                           <div>
@@ -716,11 +957,15 @@ const handleGeneratePDF = async () => {
                                 <SelectValue placeholder="اختر الوقت" />
                               </SelectTrigger>
                               <SelectContent>
-                                {timeSlots.map((time, index) => (
-                                  <SelectItem key={index} value={time}>
-                                    {time}
-                                  </SelectItem>
-                                ))}
+                                {timeSlots.length === 0 ? (
+                                  <div className="px-4 py-2 text-gray-500">لا توجد أوقات متاحة لهذا اليوم</div>
+                                ) : (
+                                  timeSlots.map((time, index) => (
+                                    <SelectItem key={index} value={time}>
+                                      {time}
+                                    </SelectItem>
+                                  ))
+                                )}
                               </SelectContent>
                             </Select>
                           </div>

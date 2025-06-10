@@ -77,17 +77,23 @@ const ReportsPage = () => {
       // جلب المواعيد وحساب الإيرادات من المؤكد فقط
       const appointmentsSnap = await getDocs(collection(db, 'appointments'));
       let confirmedCount = 0;
+      let totalRevenue = 0;
       appointmentsSnap.forEach(doc => {
         const d = doc.data();
         if (fromDate && toDate) {
           const date = d.date ? new Date(d.date) : null;
           if (date && (date < new Date(fromDate) || date > new Date(toDate))) return;
         }
-        if (d.status === 'confirmed') confirmedCount++;
+        if (d.status === 'confirmed') {
+          confirmedCount++;
+          if (d.price) {
+            totalRevenue += Number(d.price);
+          }
+        }
       });
       setConfirmedAppointments(confirmedCount);
-      setRevenue(confirmedCount * visitPrice);
-      setProfit((confirmedCount * visitPrice) - expenseSum);
+      setRevenue(totalRevenue); // الإيراد = مجموع أسعار خدمات المواعيد المؤكدة
+      setProfit(totalRevenue - expenseSum); // الأرباح = الإيراد - المصروفات
       setLoading(false);
     };
     fetchData();

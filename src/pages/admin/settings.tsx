@@ -26,7 +26,6 @@ import {
 
 const defaultSettings = {
   clinicName: 'عيادة د. محمد رشاد لطب الأسنان',
-  price: '', // سعر الكشف
   phone: '01551290902',
   email: 'Mohamed@gmail.com',
   address: 'دكرنس، الدقهلية، مصر',
@@ -47,6 +46,9 @@ const defaultSettings = {
     { value: 'other', label: 'أخرى', isDirect: false },
   ],
 };
+
+// قائمة الأيام الثابتة
+const weekDays = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
 
 const SettingsAdmin = () => {
   useEffect(() => {
@@ -89,7 +91,6 @@ const SettingsAdmin = () => {
           const data = docSnap.data();
           setSettings({
             clinicName: data.clinicName || '',
-            price: data.price || '',
             phone: data.phone || '',
             email: data.email || '',
             address: data.address || '',
@@ -287,19 +288,6 @@ const SettingsAdmin = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="price">سعر الكشف (جنيه)</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        min="0"
-                        value={settings.price}
-                        onChange={e => handleChange('price', e.target.value)}
-                        placeholder="مثال: 200"
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
                       <Label htmlFor="address">العنوان</Label>
                       <Input 
                         id="address" 
@@ -415,11 +403,27 @@ const SettingsAdmin = () => {
                       >
                         <div>
                           <Label>اليوم</Label>
-                          <Input 
-                            value={h.day} 
-                            onChange={e => handleWorkingHourChange(idx, 'day', e.target.value)} 
-                            placeholder="مثال: السبت - الأربعاء"
-                          />
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {weekDays.map(day => (
+                              <label key={day} className="flex items-center gap-1 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={h.day?.includes(day)}
+                                  onChange={e => {
+                                    const daysArr = h.day ? h.day.split(',') : [];
+                                    let newDays;
+                                    if (e.target.checked) {
+                                      newDays = [...daysArr, day].filter((v, i, a) => a.indexOf(v) === i);
+                                    } else {
+                                      newDays = daysArr.filter(d => d !== day);
+                                    }
+                                    handleWorkingHourChange(idx, 'day', newDays.join(','));
+                                  }}
+                                />
+                                {day}
+                              </label>
+                            ))}
+                          </div>
                         </div>
                         <div>
                           <Label>الوقت</Label>
@@ -547,7 +551,27 @@ const SettingsAdmin = () => {
           </AlertDialogHeader>
           <div className="flex flex-col gap-2 my-4">
             <Label>اليوم</Label>
-            <Input value={editHourDay} onChange={e => setEditHourDay(e.target.value)} />
+            <div className="flex flex-wrap gap-2 mt-1">
+              {weekDays.map(day => (
+                <label key={day} className="flex items-center gap-1 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editHourDay.split(',').map(d => d.trim()).includes(day)}
+                    onChange={e => {
+                      const daysArr = editHourDay ? editHourDay.split(',').map(d => d.trim()) : [];
+                      let newDays;
+                      if (e.target.checked) {
+                        newDays = [...daysArr, day].filter((v, i, a) => a.indexOf(v) === i);
+                      } else {
+                        newDays = daysArr.filter(d => d !== day);
+                      }
+                      setEditHourDay(newDays.join(','));
+                    }}
+                  />
+                  {day}
+                </label>
+              ))}
+            </div>
             <Label>الوقت</Label>
             <Input value={editHourTime} onChange={e => setEditHourTime(e.target.value)} />
           </div>

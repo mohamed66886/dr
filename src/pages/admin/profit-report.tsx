@@ -56,24 +56,29 @@ const ProfitReportPage = () => {
     // Calculate confirmed appointments and revenue
     const appointmentsSnap = await getDocs(collection(db, 'appointments'));
     let confirmedCount = 0;
+    let totalRevenue = 0;
     appointmentsSnap.forEach(doc => {
       const d = doc.data();
       if (fromDate && toDate) {
         const date = d.date ? new Date(d.date) : null;
         if (date && (date < new Date(fromDate) || date > new Date(toDate))) return;
       }
-      if (d.status === 'confirmed') confirmedCount++;
+      if (d.status === 'confirmed') {
+        confirmedCount++;
+        if (d.price) {
+          totalRevenue += Number(d.price);
+        }
+      }
     });
-    
     setConfirmedAppointments(confirmedCount);
-    const calculatedRevenue = confirmedCount * visitPrice;
-    setRevenue(calculatedRevenue);
-    setProfit(calculatedRevenue - expenseSum);
+    setRevenue(totalRevenue);
+    setProfit(totalRevenue - expenseSum);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate]);
 
   const containerVariants = {
@@ -206,7 +211,6 @@ const ProfitReportPage = () => {
             <motion.div
               variants={itemVariants}
               whileHover="hover"
-              variants={cardVariants}
               className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500"
             >
               <div className="flex items-center justify-between">
@@ -243,7 +247,6 @@ const ProfitReportPage = () => {
             <motion.div
               variants={itemVariants}
               whileHover="hover"
-              variants={cardVariants}
               className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500"
             >
               <div className="flex items-center justify-between">
@@ -280,7 +283,6 @@ const ProfitReportPage = () => {
             <motion.div
               variants={itemVariants}
               whileHover="hover"
-              variants={cardVariants}
               className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500"
             >
               <div className="flex items-center justify-between">
@@ -317,7 +319,6 @@ const ProfitReportPage = () => {
             <motion.div
               variants={itemVariants}
               whileHover="hover"
-              variants={cardVariants}
               className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500"
             >
               <div className="flex items-center justify-between">
