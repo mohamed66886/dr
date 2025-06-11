@@ -44,18 +44,10 @@ const adminLinks = [
       label: 'صفحه من نحن',
       icon: <FiCalendar className="text-sm" />
     },
+
+
     { 
-      to: '/admin/pages/servicespage', 
-      label: 'صفحه الخدمات',
-      icon: <FiCalendar className="text-sm" />
-    },
-    { 
-      to: '/admin/pages/contactuspage', 
-      label: 'صفحه التواصل',
-      icon: <FiCalendar className="text-sm" />
-    },
-    { 
-      to: '/admin/pages/TestimonialsPage', 
+      to: '/admin/TestimonialsPage', 
 
       label: 'صفحه الاراء ',
       icon: <FiCalendar className="text-sm" />

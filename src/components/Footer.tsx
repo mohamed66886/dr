@@ -242,7 +242,8 @@ const Footer = () => {
               className="text-gray-300 text-xs md:text-sm"
               whileHover={{ scale: 1.01 }}
             >
-              © {new Date().getFullYear()} {clinic.clinicName}. جميع الحقوق محفوظة.
+              © 2025 
+              <a href="https://codexaa.tech" target="_blank" rel="noopener noreferrer" className="text-white bg-gradient-to-r from-teal-400 to-blue-500 px-2 py-0.5 rounded font-bold underline hover:text-teal-300 transition-colors shadow-md">شركة Codexa</a>. جميع الحقوق محفوظة.
             </motion.p>
             <motion.p 
               className="text-gray-300 text-xs md:text-sm mt-2 md:mt-0"
@@ -252,6 +253,7 @@ const Footer = () => {
             </motion.p>
           </div>
         </div>
+
       </div>
     </footer>
   );

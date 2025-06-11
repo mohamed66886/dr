@@ -80,6 +80,18 @@ const Appointment = () => {
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [nextDateForDay, setNextDateForDay] = useState<string | null>(null);
+  // تعريف نوع بيانات الموعد بشكل مبسط
+  type AppointmentType = {
+    date: string;
+    time: string;
+    name?: string;
+    phone?: string;
+    service?: string;
+    notes?: string;
+    price?: number;
+    // أضف الحقول الأخرى إذا لزم الأمر
+  };
+  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
 
   // استخراج الأيام المتاحة فقط (بدون أيام مغلقة) بشكل ديناميكي
   const availableDays = useMemo(() => {
@@ -157,8 +169,29 @@ const Appointment = () => {
         // يمكن إضافة لوج أو رسالة خطأ هنا إذا رغبت
       }
     };
+    const fetchAppointments = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'appointments'));
+        const allAppointments: AppointmentType[] = querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            date: data.date,
+            time: data.time,
+            name: data.name,
+            phone: data.phone,
+            service: data.service,
+            notes: data.notes,
+            price: data.price,
+          };
+        });
+        setAppointments(allAppointments);
+      } catch (e) {
+        // يمكن إضافة لوج أو رسالة خطأ هنا إذا رغبت
+      }
+    };
     fetchSettings();
     fetchServices();
+    fetchAppointments();
   }, []);
 
   // دالة لتوليد الأوقات المتاحة من فترة العمل (مثلاً: 9:00 ص - 5:00 م)
@@ -188,9 +221,9 @@ const Appointment = () => {
     };
     const start = parseTime(from);
     const end = parseTime(to);
-    // توليد الأوقات كل نصف ساعة
+    // توليد الأوقات كل ربع ساعة بدلاً من نصف ساعة
     const slots: string[] = [];
-    for (let t = start; t <= end; t += 30) {
+    for (let t = start; t <= end; t += 15) {
       const hour = Math.floor(t / 60);
       const minute = t % 60;
       const period = hour >= 12 ? 'م' : 'ص';
@@ -209,6 +242,15 @@ const Appointment = () => {
       toast({
         title: "خطأ في البيانات",
         description: "الرجاء ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
+    // تحقق من وجود موعد بنفس اليوم والوقت قبل الحجز
+    if (isSlotTaken(formData.date, formData.time)) {
+      toast({
+        title: "هذا الوقت محجوز بالفعل",
+        description: "يرجى اختيار وقت آخر للحجز.",
         variant: "destructive",
       });
       return;
@@ -294,7 +336,7 @@ const handleGeneratePDF = async () => {
             <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.8rem; border-radius: 8px; margin-top: 1rem;">
                 <div style="text-align: right; color: #2d3748;">
                     <p style="margin: 0; font-weight: 600;">رقم الحجز: #${Math.floor(1000 + Math.random() * 9000)}</p>
-                    <p style="margin: 0; font-size: 0.9rem;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</p>
+                    <p style="margin: 0; font-size: 0.9rem; color: #4a5568;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</p>
                 </div>
                 <img src="${qrImage}" width="100" height="100" alt="QR Code" style="border: 1px solid #e2e8f0; border-radius: 4px;"/>
             </div>
@@ -623,11 +665,18 @@ const handleGeneratePDF = async () => {
       if (d && t) {
         if (!isTimeWithinWorkingHours(d, t)) {
           setWorkTimeWarning('الميعاد المختار خارج أوقات العمل الرسمية للعيادة. يرجى اختيار وقت آخر.');
+        } else if (isSlotTaken(d, t)) {
+          setWorkTimeWarning('هذا الوقت محجوز بالفعل. يرجى اختيار وقت آخر.');
         } else {
           setWorkTimeWarning(null);
         }
       }
     }
+  };
+
+  // دالة للتحقق من وجود موعد بنفس اليوم والوقت
+  const isSlotTaken = (date: string, time: string) => {
+    return appointments.some(app => app.date === date && app.time === time);
   };
 
   // استخراج الأيام المتاحة من workingHours

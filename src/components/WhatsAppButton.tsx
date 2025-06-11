@@ -2,23 +2,39 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { FaWhatsapp, FaCommentAlt, FaTimes } from 'react-icons/fa';
 import { RiSendPlaneFill } from 'react-icons/ri';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const WhatsAppButton = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
 
   useEffect(() => {
+    // جلب رقم الواتساب من إعدادات العيادة
+    const fetchWhatsapp = async () => {
+      try {
+        const docRef = doc(db, 'config', 'clinicSettings');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setWhatsappNumber(data.whatsapp || '');
+        }
+      } catch (e) {
+        setWhatsappNumber('');
+      }
+    };
+    fetchWhatsapp();
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 3000);
-
     return () => clearTimeout(timer);
   }, []);
 
   const handleWhatsAppClick = () => {
-    const phoneNumber = "201062097359"; // تم تحديث الرقم ليبدأ بكود مصر الدولي الصحيح
+    const phoneNumber = whatsappNumber || "201062097359"; // fallback
     const defaultMessage = message || "مرحباً، أود حجز موعد في عيادة د. أحمد العليمي";
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
     window.open(url, '_blank');

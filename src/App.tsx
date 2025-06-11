@@ -79,7 +79,7 @@ const App = () => {
               <Route path="/admin/aboute-us" element={<AdminRoute><AbouteUsPage /></AdminRoute>} />
               <Route path="/admin/pages/abouteuspage" element={<AdminRoute><AbouteUsPage /></AdminRoute>} />
               <Route path="/admin/messages" element={<AdminRoute><AdminMessages /></AdminRoute>} />
-              <Route path="/admin/TestimonialsPage" element={<Navigate to="/admin/testimonials" replace />} />
+              <Route path="/admin/TestimonialsPage" element={<AdminRoute><TestimonialsPage /></AdminRoute>} />
               <Route path="/admin/testimonials" element={<AdminRoute><TestimonialsPage /></AdminRoute>} />
               <Route path="/admin/pages/gallerypage" element={<AdminRoute><GalleryAdminPage /></AdminRoute>} />
               
