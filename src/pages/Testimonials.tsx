@@ -2,6 +2,9 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { FaStar, FaPlay, FaUser, FaCalendarAlt, FaThumbsUp, FaClock } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from 'react';
+import { db } from '../firebase';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 // Animation variants
 const container = {
@@ -19,73 +22,56 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
+// Define Testimonial type
+interface Testimonial {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  service: string;
+  avatar: string;
+}
+
+// Video Testimonial type
+interface VideoTestimonial {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+}
+
 const Testimonials = () => {
-  const testimonials = [
-    {
-      id: 1,
-      name: 'أحمد م.',
-      rating: 5,
-      text: 'تجربة رائعة مع د. أحمد العليمي. زراعة الأسنان كانت بدون ألم والنتيجة أكثر من ممتاز. أنصح بشدة!',
-      service: 'زراعة الأسنان',
-      avatar: 'https://randomuser.me/api/portraits/men/1.jpg'
-    },
-    {
-      id: 2,
-      name: 'فاطمة ع.',
-      rating: 5,
-      text: 'الدكتور محترف جداً وطاقمه ممتاز. حصلت على تبييض أسنان رائع وأصبحت أبتسم بثقة أكبر.',
-      service: 'تبييض الأسنان',
-      avatar: 'https://randomuser.me/api/portraits/women/1.jpg'
-    },
-    {
-      id: 3,
-      name: 'محمد س.',
-      rating: 5,
-      text: 'عيادة نظيفة جداً وخدمة راقية. الدكتور صبور ويشرح كل شيء بوضوح. تقويم أسناني كان ناجح جداً.',
-      service: 'تقويم الأسنان',
-      avatar: 'https://randomuser.me/api/portraits/men/2.jpg'
-    },
-    {
-      id: 4,
-      name: 'نورا ح.',
-      rating: 5,
-      text: 'كنت خائفة من طبيب الأسنان لكن د. أحمد جعلني مرتاحة تماماً. العلاج كان سريع وبدون ألم.',
-      service: 'علاج الجذور',
-      avatar: 'https://randomuser.me/api/portraits/women/2.jpg'
-    },
-    {
-      id: 5,
-      name: 'خالد ب.',
-      rating: 5,
-      text: 'أفضل عيادة أسنان جربتها. التعامل احترافي والنتائج ممتازة. شكراً د. أحمد على الخدمة الرائعة.',
-      service: 'تنظيف الأسنان',
-      avatar: 'https://randomuser.me/api/portraits/men/3.jpg'
-    },
-    {
-      id: 6,
-      name: 'مريم ي.',
-      rating: 5,
-      text: 'الحشوات التجميلية كانت في غاية الدقة والجودة. لا يمكن ملاحظتها أبداً. عمل فني رائع!',
-      service: 'حشوات تجميلية',
-      avatar: 'https://randomuser.me/api/portraits/women/3.jpg'
-    },
-    {
-      id: 7,
-      name: 'سامي ر.',
-      rating: 5,
-      text: 'موظفو الاستقبال والممرضات كلهم رائعون. العيادة حديثة والمعدات متطورة. تجربة استثنائية.',
-      service: 'فحص شامل',
-      avatar: 'https://randomuser.me/api/portraits/men/4.jpg'
-    },
-    {
-      id: 8,
-      name: 'ليلى ت.',
-      rating: 5,
-      text: 'د. أحمد حل مشكلة أسناني التي عانيت منها لسنوات. الآن أكل براحة تامة. جزاه الله خير.',
-      service: 'زراعة الأسنان',
-      avatar: 'https://randomuser.me/api/portraits/women/4.jpg'
-    }
-  ];
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [videoTestimonials, setVideoTestimonials] = useState<VideoTestimonial[]>([]);
+  const [homeStats, setHomeStats] = useState<{ happyPatients?: string; experienceYears?: string }>({});
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      const querySnapshot = await getDocs(collection(db, 'testimonials'));
+      setTestimonials(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Testimonial)));
+    };
+    const fetchVideoTestimonials = async () => {
+      const querySnapshot = await getDocs(collection(db, 'videoTestimonials'));
+      setVideoTestimonials(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VideoTestimonial)));
+    };
+    const fetchHomeStats = async () => {
+      try {
+        const docRef = doc(db, 'pages', 'home');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          setHomeStats({
+            happyPatients: d.happyPatients || '5000+',
+            experienceYears: d.experienceYears || '15+',
+          });
+        }
+      } catch (e) {
+        // يمكن إضافة لوج أو تجاهل الخطأ
+      }
+    };
+    fetchTestimonials();
+    fetchVideoTestimonials();
+    fetchHomeStats();
+  }, []);
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -94,6 +80,20 @@ const Testimonials = () => {
         className={`text-lg ${index < rating ? 'text-yellow-400 fill-current' : 'text-gray-300 fill-current'}`}
       />
     ));
+  };
+
+  // Helper to convert any YouTube link to embed
+  const getYoutubeEmbedUrl = (url: string) => {
+    try {
+      const regExp = /^.*(?:youtu.be\/|v=|embed\/|shorts\/)([a-zA-Z0-9_-]{11}).*/;
+      const match = url.match(regExp);
+      if (match && match[1]) {
+        return `https://www.youtube.com/embed/${match[1]}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
   };
 
   return (
@@ -142,8 +142,8 @@ const Testimonials = () => {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
           >
             {[
-              { value: '5000+', label: 'مريض سعيد', icon: <FaUser className="text-dental-blue text-2xl mx-auto mb-2" /> },
-              { value: '15+', label: 'سنة خبرة', icon: <FaCalendarAlt className="text-dental-blue text-2xl mx-auto mb-2" /> },
+              { value: homeStats.happyPatients || '5000+', label: 'مريض سعيد', icon: <FaUser className="text-dental-blue text-2xl mx-auto mb-2" /> },
+              { value: homeStats.experienceYears || '15+', label: 'سنة خبرة', icon: <FaCalendarAlt className="text-dental-blue text-2xl mx-auto mb-2" /> },
               { value: '98%', label: 'نسبة الرضا', icon: <FaThumbsUp className="text-dental-blue text-2xl mx-auto mb-2" /> },
               { value: '24/7', label: 'خدمة الطوارئ', icon: <FaClock className="text-dental-blue text-2xl mx-auto mb-2" /> }
             ].map((stat, index) => (
@@ -249,73 +249,31 @@ const Testimonials = () => {
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {/* فيديوهات حقيقية */}
-            <motion.div 
-              variants={item}
-              whileHover={{ scale: 1.02 }}
-            >
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="relative group">
-                  <iframe
-                    width="100%"
-                    height="250"
-                    src="https://www.youtube.com/embed/2Vv-BfVoq4g"
-                    title="شهادة مريض 1"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-48 md:h-56 object-cover"
-                  ></iframe>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-gray-800 mb-1">شهادة المريض 1</h3>
-                  <p className="text-sm text-gray-600">تجربة علاج ناجحة</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div 
-              variants={item}
-              whileHover={{ scale: 1.02 }}
-            >
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="relative group">
-                  <iframe
-                    width="100%"
-                    height="250"
-                    src="https://www.youtube.com/embed/1w7OgIMMRc4"
-                    title="شهادة مريض 2"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-48 md:h-56 object-cover"
-                  ></iframe>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-gray-800 mb-1">شهادة المريض 2</h3>
-                  <p className="text-sm text-gray-600">تجربة علاج ناجحة</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div 
-              variants={item}
-              whileHover={{ scale: 1.02 }}
-            >
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="relative group">
-                  <iframe
-                    width="100%"
-                    height="250"
-                    src="https://www.youtube.com/embed/3JZ_D3ELwOQ"
-                    title="شهادة مريض 3"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-48 md:h-56 object-cover"
-                  ></iframe>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-gray-800 mb-1">شهادة المريض 3</h3>
-                  <p className="text-sm text-gray-600">تجربة علاج ناجحة</p>
-                </CardContent>
-              </Card>
-            </motion.div>
+            {videoTestimonials.map((video) => (
+              <motion.div 
+                key={video.id}
+                variants={item}
+                whileHover={{ scale: 1.02 }}
+              >
+                <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div className="relative group">
+                    <iframe
+                      width="100%"
+                      height="250"
+                      src={getYoutubeEmbedUrl(video.url)}
+                      title={video.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-48 md:h-56 object-cover"
+                    ></iframe>
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-gray-800 mb-1">{video.title}</h3>
+                    <p className="text-sm text-gray-600">{video.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </motion.section>

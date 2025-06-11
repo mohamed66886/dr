@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 
-const collectionsToHandle = ['users', 'services', 'appointments', 'expenses'];
+const collectionsToHandle = ['users', 'services', 'appointments', 'expenses', 'expenseTypes'];
 
 const DatabaseAdmin = () => {
   const { toast } = useToast();

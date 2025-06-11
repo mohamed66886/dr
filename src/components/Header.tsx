@@ -163,7 +163,8 @@ const Header = () => {
                   style={{ fontFamily: 'Georgia, Times New Roman, serif', letterSpacing: '0.06em', lineHeight: 1.1 }}
 
                 >
-                  Dr. Mohamed Rashad
+
+                  Dr. Moaz Ashraf
                 </h1>
                 <p className="text-sm text-gray-600">طبيب الأسنان</p>
               </div>

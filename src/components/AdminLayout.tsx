@@ -17,6 +17,7 @@ import {
 import { MdOutlineMedicalServices } from 'react-icons/md';
 import { IoMdAnalytics } from 'react-icons/io';
 import { useClinicName } from '@/hooks/useClinicName';
+import { SearchCheckIcon } from 'lucide-react';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -29,6 +30,44 @@ const adminLinks = [
     icon: <FiHome className="text-lg" />,
     exact: true
   },
+{
+  label: 'الصفحات',
+  icon: <IoMdAnalytics className="text-lg" />,
+  dropdown: [
+    { 
+      to: '/admin/homepage', 
+      label: 'الصفحه الرئيسية',
+      icon: <FiCalendar className="text-sm" />
+    },
+    { 
+      to: '/admin/pages/abouteuspage', 
+      label: 'صفحه من نحن',
+      icon: <FiCalendar className="text-sm" />
+    },
+    { 
+      to: '/admin/pages/servicespage', 
+      label: 'صفحه الخدمات',
+      icon: <FiCalendar className="text-sm" />
+    },
+    { 
+      to: '/admin/pages/contactuspage', 
+      label: 'صفحه التواصل',
+      icon: <FiCalendar className="text-sm" />
+    },
+    { 
+      to: '/admin/pages/TestimonialsPage', 
+
+      label: 'صفحه الاراء ',
+      icon: <FiCalendar className="text-sm" />
+    },
+    { 
+      to: '/admin/pages/gallerypage', 
+      label: 'المعرض ',
+      icon: <FiCalendar className="text-sm" />
+    },
+
+  ],
+},
   { 
     to: '/admin/appointments', 
     label: 'المواعيد',
@@ -38,6 +77,12 @@ const adminLinks = [
     to: '/admin/services', 
     label: 'الخدمات',
     icon: <MdOutlineMedicalServices className="text-lg" />
+  },
+  {
+    to: '/admin/messages', 
+    label: 'الرسائل', 
+    icon: <SearchCheckIcon className="text-lg" />,
+    adminOnly: true
   },
   {
     label: 'المصروفات',
@@ -117,8 +162,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   }
 
   // فلترة الروابط حسب صلاحيات المستخدم
+  const isAdmin = currentUser && currentUser.allowedPages && currentUser.allowedPages.includes('dashboard');
   const filteredLinks = currentUser && currentUser.allowedPages
     ? adminLinks.filter(link => {
+        if (link.label === 'الصفحات') {
+          // تظهر فقط للأدمن
+          return isAdmin;
+        }
+        if (link.adminOnly) {
+          return isAdmin;
+        }
         if (link.dropdown) {
           // إذا كان أي عنصر فرعي مسموح يظهر القائمة الرئيسية
           return link.dropdown.some(sub => currentUser.allowedPages.includes(getPageKeyFromPath(sub.to)));

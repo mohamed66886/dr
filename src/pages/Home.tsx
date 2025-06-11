@@ -5,25 +5,90 @@ import { motion } from 'framer-motion';
 import { FaTooth, FaTeeth, FaTeethOpen, FaClinicMedical, FaSmile } from 'react-icons/fa';
 import { GiToothbrush, GiTooth } from 'react-icons/gi';
 import { MdMedicalServices, MdHealthAndSafety } from 'react-icons/md';
+import { useEffect, useState } from 'react';
+import { db } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import * as FaIcons from 'react-icons/fa';
+import * as GiIcons from 'react-icons/gi';
+import * as MdIcons from 'react-icons/md';
+
+interface HomeData {
+  title: string;
+  subtitle: string;
+  heroImage: string;
+  doctorBio: string;
+  doctorImage?: string;
+  experienceYears?: string;
+  happyPatients?: string;
+  services: Array<{
+    icon?: string;
+    title: string;
+    description: string;
+  }>;
+}
 
 const Home = () => {
-  const services = [
-    {
-      icon: <FaTeeth className="text-4xl text-dental-blue" />,
-      title: 'تبييض الأسنان',
-      description: 'احصل على ابتسامة بيضاء ومشرقة باستخدام أحدث تقنيات التبييض الآمنة'
-    },
-    {
-      icon: <GiTooth className="text-4xl text-dental-blue" />,
-      title: 'زراعة الأسنان',
-      description: 'حلول متقدمة لاستبدال الأسنان المفقودة بزراعات عالية الجودة'
-    },
-    {
-      icon: <FaTeethOpen className="text-4xl text-dental-blue" />,
-      title: 'تقويم الأسنان',
-      description: 'تقويم الأسنان بأحدث التقنيات للحصول على ابتسامة مثالية ومنتظمة'
-    }
-  ];
+  const [homeData, setHomeData] = useState<HomeData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, 'pages', 'home');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          setHomeData({
+            title: d.title || '',
+            subtitle: d.subtitle || '',
+            heroImage: d.heroImage || '',
+            doctorBio: d.doctorBio || '',
+            doctorImage: d.doctorImage || '',
+            experienceYears: d.experienceYears || '15+',
+            happyPatients: d.happyPatients || '5000+',
+            services: d.services || [],
+          });
+        }
+      } catch {
+        setHomeData(null);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="text-center py-32">جاري التحميل...</div>;
+  if (!homeData) return <div className="text-center py-32 text-red-500">تعذر تحميل الصفحة</div>;
+
+  const services = homeData.services && homeData.services.length > 0
+    ? homeData.services.map(service => {
+        let IconComponent = null;
+        if (service.icon?.startsWith('Fa')) IconComponent = FaIcons[service.icon];
+        else if (service.icon?.startsWith('Gi')) IconComponent = GiIcons[service.icon];
+        else if (service.icon?.startsWith('Md')) IconComponent = MdIcons[service.icon];
+        return {
+          ...service,
+          icon: IconComponent ? <IconComponent className="text-4xl text-dental-blue" /> : null
+        };
+      })
+    : [
+      {
+        icon: <FaTeeth className="text-4xl text-dental-blue" />,
+        title: 'تبييض الأسنان',
+        description: 'احصل على ابتسامة بيضاء ومشرقة باستخدام أحدث تقنيات التبييض الآمنة'
+      },
+      {
+        icon: <GiTooth className="text-4xl text-dental-blue" />,
+        title: 'زراعة الأسنان',
+        description: 'حلول متقدمة لاستبدال الأسنان المفقودة بزراعات عالية الجودة'
+      },
+      {
+        icon: <FaTeethOpen className="text-4xl text-dental-blue" />,
+        title: 'تقويم الأسنان',
+        description: 'تقويم الأسنان بأحدث التقنيات للحصول على ابتسامة مثالية ومنتظمة'
+      }
+    ];
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -46,7 +111,7 @@ const Home = () => {
       <section 
         className="relative text-white py-32 overflow-hidden"
         style={{
-          backgroundImage: 'linear-gradient(rgba(14, 165, 233, 0.85), rgba(14, 165, 233, 0.85)), url("/images/dental-hero.jpg")',
+          backgroundImage: `linear-gradient(rgba(14, 165, 233, 0.85), rgba(14, 165, 233, 0.85)), url('${homeData.heroImage || "/images/dental-hero.jpg"}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed'
@@ -155,15 +220,14 @@ const Home = () => {
                     <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#38bdf8" flood-opacity="0.18"/>
                   </filter>
                 </defs>
-                <text x="50%" y="60" text-anchor="middle" font-family="Cairo, Tajawal, 'Noto Kufi Arabic', 'Segoe UI', Arial, sans-serif" font-size="64" font-weight="900" fill="url(#paint0_linear)" filter="url(#shadow)">ابتسامتك سر ثقتك</text>
+                <text x="50%" y="60" text-anchor="middle" font-family="Cairo, Tajawal, 'Noto Kufi Arabic', 'Segoe UI', Arial, sans-serif" font-size="64" font-weight="900" fill="url(#paint0_linear)" filter="url(#shadow)">{homeData.title || 'ابتسامتك سر ثقتك'}</text>
               </svg>
             </motion.h1>
             <motion.p 
               variants={fadeIn}
               className="text-xl md:text-2xl mb-8 opacity-90 drop-shadow-lg"
             >
-              مع د. محمد رشاد احصل على الابتسامة التي تحلم بها
-
+              {homeData.subtitle || 'مع د. معاذ أشرف احصل على الابتسامة التي تحلم بها'}
             </motion.p>
             <motion.div 
               variants={fadeIn}
@@ -215,7 +279,7 @@ const Home = () => {
                   style={{ width: '260px', height: '260px', minWidth: '180px', minHeight: '180px', background: 'white' }}
                 >
                   <img 
-                    src="/uu.png" 
+                    src={homeData.doctorImage || "/dr.JPG"} 
                     alt="د. محمد رشاد"
                     className="w-full h-full object-cover rounded-full animate-fadeInUp"
                     style={{ animationDuration: '1.2s' }}
@@ -254,7 +318,7 @@ const Home = () => {
             >
               <h2 className="text-4xl font-bold text-gray-800 mb-6 flex items-center gap-4">
                 <span className="relative inline-block">
-                  <span className="bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg" style={{fontFamily: 'Cairo, Tajawal, "Noto Kufi Arabic", Arial, sans-serif', letterSpacing: '0.01em'}}>د. محمد رشاد</span>
+                  <span className="bg-gradient-to-r from-dental-blue via-sky-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg" style={{fontFamily: 'Cairo, Tajawal, "Noto Kufi Arabic", Arial, sans-serif', letterSpacing: '0.01em'}}>د. معاذ أشرف</span>
                 </span>
                 <motion.span
                   initial={{ y: 0 }}
@@ -270,8 +334,7 @@ const Home = () => {
                 </motion.span>
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                طبيب أسنان متخصص مع أكثر من 15 عامًا من الخبرة في مجال طب الأسنان التجميلي والعلاجي. 
-                حاصل على شهادات عالمية في زراعة الأسنان وتقويم الأسنان من أفضل الجامعات الأوروبية والأمريكية.
+                {homeData.doctorBio || 'طبيب أسنان متخصص مع أكثر من 15 عامًا من الخبرة في مجال طب الأسنان التجميلي والعلاجي. حاصل على شهادات عالمية في زراعة الأسنان وتقويم الأسنان من أفضل الجامعات الأوروبية والأمريكية.'}
               </p>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
                 نؤمن بأن كل مريض يستحق أفضل رعاية طبية، ولذلك نستخدم أحدث التقنيات والمعدات 
@@ -286,7 +349,7 @@ const Home = () => {
                   className="relative bg-gradient-to-br from-white via-blue-50 to-cyan-50 p-6 rounded-2xl shadow-xl text-center border border-blue-100 overflow-hidden group hover:scale-105 hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="absolute -top-4 -left-4 w-16 h-16 bg-gradient-to-tr from-dental-blue/20 to-cyan-400/10 rounded-full blur-2xl group-hover:blur-md transition-all duration-300"></div>
-                  <h3 className="text-4xl font-extrabold text-dental-blue drop-shadow-lg animate-pulse">15+</h3>
+                  <h3 className="text-4xl font-extrabold text-dental-blue drop-shadow-lg animate-pulse">{homeData.experienceYears || '15+'}</h3>
                   <p className="text-gray-600 mt-2 font-medium tracking-wide">سنة خبرة</p>
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0.5 }}
@@ -308,7 +371,7 @@ const Home = () => {
                   className="relative bg-gradient-to-br from-white via-blue-50 to-cyan-50 p-6 rounded-2xl shadow-xl text-center border border-blue-100 overflow-hidden group hover:scale-105 hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="absolute -top-4 -right-4 w-16 h-16 bg-gradient-to-tr from-cyan-400/20 to-dental-blue/10 rounded-full blur-2xl group-hover:blur-md transition-all duration-300"></div>
-                  <h3 className="text-4xl font-extrabold text-dental-blue drop-shadow-lg animate-pulse">5000+</h3>
+                  <h3 className="text-4xl font-extrabold text-dental-blue drop-shadow-lg animate-pulse">{homeData.happyPatients || '5000+'}</h3>
                   <p className="text-gray-600 mt-2 font-medium tracking-wide">مريض سعيد</p>
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0.5 }}
@@ -406,7 +469,7 @@ const Home = () => {
             </h2>
             <div className="w-24 h-1 bg-gradient-to-r from-white via-sky-200 to-dental-blue mx-auto mb-8 rounded-full animate-pulse"></div>
             <p className="text-xl md:text-2xl mb-10 opacity-90 max-w-xl mx-auto font-medium">
-              احجز موعدك اليوم واحصل على استشارة مجانية مع د. محمد رشاد
+              احجز موعدك اليوم واحصل على استشارة مجانية مع د. معاذ أشرف
             </p>
             <Link to="/appointment">
               <Button className="bg-white text-dental-blue hover:bg-sky-100 px-10 py-5 text-xl font-bold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 mx-auto flex items-center gap-3">

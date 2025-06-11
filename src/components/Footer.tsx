@@ -68,17 +68,17 @@ const Footer = () => {
     <footer className="bg-gradient-to-b from-gray-800 to-gray-900 text-white text-sm md:text-base">
       <div className="container mx-auto px-2 sm:px-4 py-8 md:py-12">
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8"
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 text-center md:text-right place-items-center md:place-items-stretch"
           initial="hidden"
           whileInView="visible"
           variants={staggerContainer}
           viewport={{ once: true }}
         >
           {/* About Section */}
-          <motion.div variants={fadeIn}>
-            <div className="flex items-center space-x-2 space-x-reverse mb-4">
+          <motion.div variants={fadeIn} className="w-full flex flex-col items-center md:items-start">
+            <div className="flex flex-col items-center md:flex-row md:items-center md:space-x-2 md:space-x-reverse mb-4">
               <motion.div 
-                className="w-10 h-10 bg-gradient-to-r from-blue-500 to-teal-400 rounded-full flex items-center justify-center"
+                className="w-10 h-10 bg-gradient-to-r from-blue-500 to-teal-400 rounded-full flex items-center justify-center mb-2 md:mb-0"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -92,7 +92,6 @@ const Footer = () => {
             <p className="text-gray-300 text-sm leading-relaxed">
               {clinic.about}
             </p>
-            
             {/* Animated Tooth Icon */}
             <motion.div 
               className="mt-4"
@@ -111,7 +110,7 @@ const Footer = () => {
           </motion.div>
 
           {/* Quick Links */}
-          <motion.div variants={fadeIn}>
+          <motion.div variants={fadeIn} className="w-full flex flex-col items-center md:items-start">
             <h4 className="text-lg font-semibold mb-4">روابط سريعة</h4>
             <ul className="space-y-3">
               <motion.li whileHover={{ x: 5 }}>
@@ -142,7 +141,7 @@ const Footer = () => {
           </motion.div>
 
           {/* Services */}
-          <motion.div variants={fadeIn}>
+          <motion.div variants={fadeIn} className="w-full flex flex-col items-center md:items-start">
             <h4 className="text-lg font-semibold mb-4">خدماتنا</h4>
             <ul className="space-y-3">
               <motion.li 
@@ -177,9 +176,9 @@ const Footer = () => {
           </motion.div>
 
           {/* Contact Info */}
-          <motion.div variants={fadeIn}>
+          <motion.div variants={fadeIn} className="w-full flex flex-col items-center md:items-start">
             <h4 className="text-lg font-semibold mb-4">معلومات التواصل</h4>
-            <div className="space-y-4">
+            <div className="space-y-4 w-full flex flex-col items-center md:items-start">
               <motion.p 
                 className="text-gray-300 flex items-center gap-2"
                 whileHover={{ scale: 1.02 }}
@@ -208,11 +207,10 @@ const Footer = () => {
                 <span>{clinic.address}</span>
               </motion.p>
             </div>
-            
             {/* Social Media */}
             <div className="mt-6">
-              <h5 className="text-sm font-semibold mb-3">تابعنا على</h5>
-              <div className="flex space-x-4 space-x-reverse">
+              <h5 className="text-sm font-semibold mb-3 text-center md:text-right">تابعنا على</h5>
+              <div className="flex justify-center md:justify-start space-x-4 space-x-reverse">
                 <motion.a 
                   href={clinic.facebook} 
                   className="text-gray-300 hover:text-blue-400 transition-colors"
@@ -239,7 +237,7 @@ const Footer = () => {
           </motion.div>
         </motion.div>
         <div className="border-t border-gray-700 mt-6 md:mt-8 pt-6 md:pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-2 md:gap-0 text-center">
+          <div className="flex flex-col md:flex-row justify-center md:justify-between items-center gap-2 md:gap-0 text-center">
             <motion.p 
               className="text-gray-300 text-xs md:text-sm"
               whileHover={{ scale: 1.01 }}

@@ -265,7 +265,7 @@ const ServicesAdmin = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 sm:p-8 max-w-full mx-auto bg-gray-50 min-h-screen">
+      <div className="p-2 sm:p-4 max-w-full mx-auto bg-gray-50 min-h-screen" style={{ width: '100%', maxWidth: '100vw', minWidth: '280px' }}>
         {MessageComponent}
         
         {/* العنوان الرئيسي */}
@@ -286,8 +286,8 @@ const ServicesAdmin = () => {
         {/* لوحة التحكم */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           {/* شريط الأدوات */}
-          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h2 className="text-xl font-semibold text-gray-800">
+          <div className="p-2 sm:p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
               قائمة الخدمات ({services.length})
             </h2>
             
@@ -306,7 +306,6 @@ const ServicesAdmin = () => {
               </motion.button>
             </div>
           </div>
-
           {/* فورم الإضافة */}
           <AnimatePresence>
             {isAdding && (
@@ -316,13 +315,12 @@ const ServicesAdmin = () => {
                 animate="visible"
                 exit="exit"
                 onSubmit={handleAdd}
-                className="p-4 sm:p-6 border-b border-gray-200 bg-gray-50"
+                className="p-2 sm:p-6 border-b border-gray-200 bg-gray-50"
               >
-                <h3 className="font-bold text-lg mb-4 text-blue-600 flex items-center gap-2">
+                <h3 className="font-bold text-base sm:text-lg mb-4 text-blue-600 flex items-center gap-2">
                   <FiPlus /> نموذج إضافة خدمة جديدة
                 </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       اسم الخدمة <span className="text-red-500">*</span>
@@ -455,10 +453,9 @@ const ServicesAdmin = () => {
               </motion.form>
             )}
           </AnimatePresence>
-
           {/* جدول الخدمات */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-[600px] sm:min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">

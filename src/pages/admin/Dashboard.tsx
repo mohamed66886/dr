@@ -317,8 +317,9 @@ const AdminDashboard = () => {
   return (
     <AdminLayout>
       <div
-        className="p-1 sm:p-3 md:p-8 w-full max-w-full mx-auto space-y-2 sm:space-y-6 md:space-y-8 overflow-x-hidden"
-        style={{ width: '100%', maxWidth: '100vw', minWidth: '380px' }}
+        className="p-0.5 sm:p-2 md:p-8 w-full max-w-full mx-auto space-y-1 sm:space-y-6 md:space-y-8 overflow-x-hidden"
+        style={{ width: '98%', maxWidth: '100vw', minWidth: '280px', margin: 'auto', ...(window.innerWidth <= 640 ? { width: '390px' } : {}) }}
+        
       >
         {/* Header with Search */}
         <motion.div 

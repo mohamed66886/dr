@@ -236,7 +236,7 @@ const Services = () => {
             هل تحتاج إلى استشارة طبية؟
           </h2>
           <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
-            احجز موعدك اليوم واحصل على استشارة مجانية مع د. محمد رشاد
+            احجز موعدك اليوم واحصل على استشارة مجانية مع د. معاذ أشرف
           </p>
           <Link to="/appointment">
             <motion.div

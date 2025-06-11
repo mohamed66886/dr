@@ -1,247 +1,316 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '@/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { FiX, FiZoomIn, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSwipeable } from 'react-swipeable';
 
 const Gallery = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [galleryImages, setGalleryImages] = useState<{
+    id: string;
+    image: string;
+    title?: string;
+    description?: string;
+    category?: string;
+  }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  useEffect(() => {
+    const fetchImages = async () => {
+      setLoading(true);
+      try {
+        const snap = await getDocs(collection(db, 'gallery'));
+        const imagesData = snap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            image: data.image || '',
+            title: data.title || '',
+            description: data.description || '',
+            category: data.category || 'uncategorized'
+          };
+        });
+        setGalleryImages(imagesData);
+      } catch (error) {
+        console.error("Error fetching images:", error);
+        setGalleryImages([]);
+      }
+      setLoading(false);
+    };
+    fetchImages();
+  }, []);
+
+  // استخراج التصنيفات الفريدة من الصور
+  const uniqueCategories = Array.from(new Set(galleryImages.map(img => img.category)));
   const categories = [
-    { id: 'all', name: 'الكل' },
-    { id: 'clinic', name: 'العيادة' },
-    { id: 'equipment', name: 'المعدات' },
-    { id: 'treatments', name: 'العلاجات' },
-    { id: 'results', name: 'النتائج' }
+    { id: 'all', name: 'الكل', count: galleryImages.length },
+    ...uniqueCategories.map(cat => ({
+      id: cat,
+      name: getCategoryName(cat),
+      count: galleryImages.filter(img => img.category === cat).length
+    }))
   ];
 
-  const images = [
-    {
-      id: 1,
-      category: 'clinic',
-      title: 'غرفة الاستقبال',
-      description: 'منطقة استقبال مريحة ومجهزة بأحدث التقنيات',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 2,
-      category: 'clinic',
-      title: 'غرفة العلاج الرئيسية',
-      description: 'غرفة علاج مجهزة بأحدث المعدات الطبية',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 3,
-      category: 'equipment',
-      title: 'جهاز الأشعة الرقمي',
-      description: 'أحدث أجهزة التصوير الرقمي للأسنان',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 4,
-      category: 'equipment',
-      title: 'جهاز التبييض بالليزر',
-      description: 'تقنية متطورة لتبييض الأسنان بالليزر',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 5,
-      category: 'treatments',
-      title: 'جلسة تقويم',
-      description: 'متابعة دورية لحالة تقويم الأسنان',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 6,
-      category: 'treatments',
-      title: 'عملية زراعة',
-      description: 'إجراء زراعة أسنان بأحدث التقنيات',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 7,
-      category: 'results',
-      title: 'نتيجة تبييض',
-      description: 'قبل وبعد عملية تبييض الأسنان',
-      image: '/api/placeholder/400/300'
-    },
-    {
-      id: 8,
-      category: 'results',
-      title: 'نتيجة تقويم',
-      description: 'تحسن ملحوظ بعد انتهاء علاج التقويم',
-      image: '/api/placeholder/400/300'
-    }
-  ];
+  function getCategoryName(cat: string) {
+    const categoryNames: Record<string, string> = {
+      'clinic': 'تصميم العيادة',
+      'equipment': 'المعدات الطبية',
+      'treatments': 'إجراءات العلاج',
+      'results': 'نتائج المرضى',
+      'team': 'فريق العمل',
+      'uncategorized': 'أخرى'
+    };
+    return categoryNames[cat] || cat;
+  }
 
   const filteredImages = activeFilter === 'all' 
-    ? images 
-    : images.filter(image => image.category === activeFilter);
+    ? galleryImages 
+    : galleryImages.filter(image => image.category === activeFilter);
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    if (selectedImage === null) return;
+    
+    if (direction === 'prev') {
+      setSelectedImage(prev => 
+        prev === 0 ? filteredImages.length - 1 : prev! - 1
+      );
+    } else {
+      setSelectedImage(prev => 
+        prev === filteredImages.length - 1 ? 0 : prev! + 1
+      );
+    }
+  };
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => navigateImage('next'),
+    onSwipedRight: () => navigateImage('prev'),
+    trackMouse: true
+  });
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-dental-lightBlue to-white">
-        <div className="container-max section-padding">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-dental-darkGray mb-6 animate-fade-in">
-              معرض الصور
+      <section className="relative h-96 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-dental-blue/90 to-dental-teal/80 z-10"></div>
+        <div className="absolute inset-0 bg-[url('/images/gallery-hero.jpg')] bg-cover bg-center z-0"></div>
+        
+        <div className="container mx-auto h-full flex flex-col justify-center relative z-20 px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              معرض عيادتنا البصري
             </h1>
-            <p className="text-xl text-dental-darkGray max-w-3xl mx-auto leading-relaxed animate-fade-in">
-              تجول في عيادتنا واطلع على أحدث المعدات والتقنيات التي نستخدمها
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              اكتشف عالم العناية بالأسنان من خلال عدستنا
             </p>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Filter Buttons */}
-      <section className="py-12 bg-white">
-        <div className="container-max section-padding">
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveFilter(category.id)}
-                className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
-                  activeFilter === category.id
-                    ? 'bg-dental-blue text-white shadow-lg transform scale-105'
-                    : 'bg-dental-lightBlue text-dental-darkGray hover:bg-dental-blue/10'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+      {/* Gallery Content */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          {/* Filter Tabs */}
+          <div className="mb-12">
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveFilter(category.id)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    activeFilter === category.id
+                      ? 'bg-dental-blue text-white shadow-md'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  {category.name}
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    activeFilter === category.id 
+                      ? 'bg-white/20' 
+                      : 'bg-gray-100'
+                  }`}>
+                    {category.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Gallery Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredImages.map((image, index) => (
-              <div
-                key={image.id}
-                className="group relative overflow-hidden rounded-2xl shadow-lg card-hover animate-on-scroll cursor-pointer"
-                onClick={() => setSelectedImage(index)}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="aspect-square bg-gray-200 rounded-xl animate-pulse"></div>
+              ))}
+            </div>
+          ) : filteredImages.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-gray-400 mb-4">لا توجد صور متاحة</div>
+              <button 
+                onClick={() => setActiveFilter('all')}
+                className="text-dental-blue hover:underline"
               >
-                {/* Placeholder for image */}
-                <div className="w-full h-64 bg-gradient-to-br from-dental-blue/20 to-dental-blue/40 flex items-center justify-center">
-                  <div className="text-center text-dental-blue">
-                    <div className="w-16 h-16 bg-dental-blue/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <span className="text-2xl">📷</span>
-                    </div>
-                    <p className="font-semibold">{image.title}</p>
-                  </div>
-                </div>
-                
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1">{image.title}</h3>
-                    <p className="text-sm opacity-90">{image.description}</p>
-                  </div>
-                </div>
-
-                {/* Hover zoom effect */}
-                <div className="absolute inset-0 bg-dental-blue/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <span className="text-white text-4xl">🔍</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Modal for image preview */}
-      {selectedImage !== null && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedImage(null)}
-        >
-          <div className="max-w-4xl max-h-full bg-white rounded-2xl overflow-hidden animate-scale-in">
-            <div className="relative">
-              {/* Image placeholder */}
-              <div className="w-full h-96 bg-gradient-to-br from-dental-blue/20 to-dental-blue/40 flex items-center justify-center">
-                <div className="text-center text-dental-blue">
-                  <div className="w-24 h-24 bg-dental-blue/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-4xl">📷</span>
-                  </div>
-                  <p className="text-xl font-semibold">{filteredImages[selectedImage].title}</p>
-                </div>
-              </div>
-              
-              <button
-                onClick={() => setSelectedImage(null)}
-                className="absolute top-4 left-4 w-10 h-10 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors duration-300 flex items-center justify-center"
-              >
-                ✕
+                عرض جميع الصور
               </button>
             </div>
-            
-            <div className="p-6">
-              <h3 className="text-2xl font-bold text-dental-darkGray mb-2">
-                {filteredImages[selectedImage].title}
-              </h3>
-              <p className="text-dental-darkGray leading-relaxed">
-                {filteredImages[selectedImage].description}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Before/After Section */}
-      <section className="py-20 bg-dental-lightBlue">
-        <div className="container-max section-padding">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-dental-darkGray mb-4">قبل وبعد</h2>
-            <p className="text-xl text-dental-darkGray">شاهد التحولات المذهلة لمرضانا</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12">
-            {[1, 2].map((item) => (
-              <div key={item} className="bg-white rounded-2xl p-8 shadow-lg animate-on-scroll">
-                <h3 className="text-2xl font-bold text-dental-darkGray mb-6 text-center">
-                  حالة تبييض رقم {item}
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <h4 className="font-semibold text-dental-darkGray mb-3">قبل العلاج</h4>
-                    <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-500">صورة قبل</span>
+          ) : (
+            <motion.div 
+              layout
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
+              {filteredImages.map((image, index) => (
+                <motion.div
+                  key={image.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="group relative rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
+                  onClick={() => setSelectedImage(index)}
+                >
+                  <div className="aspect-square bg-gray-100">
+                    <img 
+                      src={image.image} 
+                      alt={image.title || 'صورة المعرض'} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                    <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      <h3 className="text-white font-semibold text-lg line-clamp-1">
+                        {image.title || 'بدون عنوان'}
+                      </h3>
+                      {image.category && (
+                        <span className="inline-block px-2 py-1 mt-1 bg-white/20 text-white text-xs rounded-full backdrop-blur-sm">
+                          {getCategoryName(image.category)}
+                        </span>
+                      )}
                     </div>
                   </div>
                   
-                  <div className="text-center">
-                    <h4 className="font-semibold text-dental-darkGray mb-3">بعد العلاج</h4>
-                    <div className="w-full h-40 bg-dental-lightBlue rounded-lg flex items-center justify-center">
-                      <span className="text-dental-blue">صورة بعد</span>
-                    </div>
+                  <div className="absolute top-3 right-3 bg-black/40 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <FiZoomIn size={18} />
                   </div>
-                </div>
-                
-                <div className="mt-6 text-center">
-                  <p className="text-dental-darkGray leading-relaxed">
-                    تحسن ملحوظ في لون الأسنان ونظافتها بعد جلسة تبييض واحدة باستخدام أحدث التقنيات
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-20 bg-white">
-        <div className="container-max section-padding text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-dental-darkGray mb-6">
-            هل تريد نتائج مماثلة؟
-          </h2>
-          <p className="text-xl text-dental-darkGray mb-8 max-w-2xl mx-auto">
-            احجز استشارتك المجانية الآن مع د. محمد رشاد واحصل على ابتسامة أحلامك
-          </p>
-          <a href="/appointment">
-            <button className="btn-primary text-lg px-8 py-4">
-              احجز استشارة مجانية
-            </button>
-          </a>
-        </div>
-      </section>
+      {/* Image Modal */}
+      <AnimatePresence>
+        {selectedImage !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 ${
+              isFullscreen ? 'bg-black' : 'bg-black/90'
+            }`}
+            onClick={() => !isFullscreen && setSelectedImage(null)}
+          >
+            <div 
+              className={`relative ${isFullscreen ? 'w-full h-full' : 'max-w-6xl max-h-[90vh]'}`}
+              {...swipeHandlers}
+            >
+              {/* Navigation Arrows */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('prev');
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full z-20 hover:bg-black/70 transition-colors"
+              >
+                <FiChevronLeft size={24} />
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('next');
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full z-20 hover:bg-black/70 transition-colors"
+              >
+                <FiChevronRight size={24} />
+              </button>
+              
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  setIsFullscreen(false);
+                  setSelectedImage(null);
+                }}
+                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full z-20 hover:bg-black/70 transition-colors"
+              >
+                <FiX size={24} />
+              </button>
+              
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFullscreen(!isFullscreen);
+                }}
+                className="absolute top-4 left-4 bg-black/50 text-white p-2 rounded-full z-20 hover:bg-black/70 transition-colors"
+              >
+                {isFullscreen ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                  </svg>
+                )}
+              </button>
+              
+              {/* Image Content */}
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="h-full w-full flex flex-col"
+              >
+                <div className={`flex-1 flex items-center justify-center ${isFullscreen ? 'p-0' : 'p-4'}`}>
+                  <img
+                    src={filteredImages[selectedImage].image}
+                    alt={filteredImages[selectedImage].title || 'صورة المعرض'}
+                    className={`${isFullscreen ? 'object-contain' : 'object-cover'} w-full h-full rounded-lg`}
+                  />
+                </div>
+                
+                {!isFullscreen && (
+                  <div className="bg-white p-4 rounded-b-lg">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {filteredImages[selectedImage].title || 'بدون عنوان'}
+                    </h3>
+                    <p className="text-gray-600">
+                      {filteredImages[selectedImage].description || 'لا يوجد وصف'}
+                    </p>
+                    {filteredImages[selectedImage].category && (
+                      <div className="mt-3">
+                        <span className="inline-block px-3 py-1 bg-dental-blue/10 text-dental-blue text-sm rounded-full">
+                          {getCategoryName(filteredImages[selectedImage].category)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

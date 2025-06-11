@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { FaGraduationCap, FaTrophy, FaFlask, FaUserMd, FaStar, FaShieldAlt, FaMicroscope, FaHeart } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import { db } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Animation variants
 const container = {
@@ -18,52 +21,36 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
-const About = () => {
-  const achievements = [
-    {
-      icon: <FaGraduationCap className="text-4xl text-dental-blue" />,
-      title: 'التعليم والشهادات',
-      description: 'دكتوراه في طب الأسنان من جامعة الملك سعود، وشهادات تخصصية من الولايات المتحدة وأوروبا'
-    },
-    {
-      icon: <FaTrophy className="text-4xl text-dental-blue" />,
-      title: 'الجوائز والتقديرات',
-      description: 'حاصل على عدة جوائز في مجال طب الأسنان التجميلي وزراعة الأسنان من الجمعيات المهنية'
-    },
-    {
-      icon: <FaFlask className="text-4xl text-dental-blue" />,
-      title: 'الأبحاث والمؤتمرات',
-      description: 'مشارك في العديد من المؤتمرات العالمية ولديه أبحاث منشورة في مجلات طبية محكمة'
-    },
-    {
-      icon: <FaUserMd className="text-4xl text-dental-blue" />,
-      title: 'الخبرة العملية',
-      description: 'أكثر من 15 عامًا من الخبرة في علاج آلاف المرضى وإجراء عمليات زراعة وتجميل الأسنان'
-    }
-  ];
+// تعريف نوع البيانات
+interface AboutData {
+  heroTitle: string;
+  heroDescription: string;
+  doctorStory: string[];
+  achievements: { title: string; description: string }[];
+  vision: string;
+  mission: string;
+  values: { title: string; description: string }[];
+}
 
-  const values = [
-    {
-      icon: <FaStar className="text-3xl text-dental-blue" />,
-      title: 'الجودة والتميز',
-      description: 'نلتزم بتقديم أعلى مستويات الجودة في جميع خدماتنا الطبية'
-    },
-    {
-      icon: <FaShieldAlt className="text-3xl text-dental-blue" />,
-      title: 'الأمان والراحة',
-      description: 'نوفر بيئة آمنة ومريحة لجميع مرضانا مع اتباع أعلى معايير التعقيم'
-    },
-    {
-      icon: <FaMicroscope className="text-3xl text-dental-blue" />,
-      title: 'التقنيات الحديثة',
-      description: 'نستخدم أحدث التقنيات والمعدات الطبية لضمان أفضل النتائج'
-    },
-    {
-      icon: <FaHeart className="text-3xl text-dental-blue" />,
-      title: 'الرعاية الشخصية',
-      description: 'نقدم رعاية شخصية مخصصة لكل مريض حسب احتياجاته الفردية'
+const About = () => {
+  const [data, setData] = useState<AboutData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      const docRef = doc(db, 'pages', 'about');
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const aboutData = snap.data() as AboutData;
+        setData(aboutData);
+      }
+      setLoading(false);
     }
-  ];
+    fetchData();
+  }, []);
+
+  if (loading || !data) return <div className="p-8">جاري التحميل...</div>;
 
   return (
     <div className="bg-white overflow-hidden">
@@ -81,7 +68,7 @@ const About = () => {
             transition={{ delay: 0.2 }}
             className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
           >
-            من نحن
+            {data.heroTitle}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0 }}
@@ -89,7 +76,7 @@ const About = () => {
             transition={{ delay: 0.4 }}
             className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed"
           >
-            تعرف على د. أحمد العليمي وفريقه المتخصص في تقديم أفضل خدمات طب الأسنان
+            {data.heroDescription}
           </motion.p>
         </div>
       </motion.section>
@@ -109,8 +96,8 @@ const About = () => {
               transition={{ duration: 0.3 }}
             >
               <img 
-                src="https://images.unsplash.com/photo-1622902046617-e3b2a2a587d1?q=80&w=600" 
-                alt="د. أحمد العليمي في العيادة"
+                src="/dr.JPG" 
+                alt="د. معاذ أشرف في العيادة"
                 className="rounded-xl shadow-2xl w-full transform transition-transform duration-500 hover:shadow-3xl"
               />
             </motion.div>
@@ -120,20 +107,10 @@ const About = () => {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">قصة د. محمد رشاد</h2>
-              <p className="text-gray-600 mb-4 leading-relaxed text-lg">
-                بدأت رحلتي في طب الأسنان منذ أكثر من 15 عامًا بحلم واحد: أن أساعد الناس على استعادة ثقتهم 
-                بأنفسهم من خلال ابتسامة صحية وجميلة. تخرجت من كلية طب الأسنان بجامعة المنصورة بتقدير امتياز 
-                مع مرتبة الشرف.
-              </p>
-              <p className="text-gray-600 mb-4 leading-relaxed text-lg">
-                سافرت إلى الولايات المتحدة وأوروبا لأحصل على أفضل التدريبات في مجال زراعة الأسنان والطب 
-                التجميلي. عدت إلى المملكة مسلحًا بأحدث المعارف والتقنيات لأخدم مجتمعي.
-              </p>
-              <p className="text-gray-600 leading-relaxed text-lg">
-                اليوم، أفتخر بأنني ساعدت آلاف المرضى في الحصول على الابتسامة التي يحلمون بها، وأن عيادتي 
-                أصبحت مكانًا يثق به الناس لعلاج أسنانهم.
-              </p>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">قصة د. معاذ أشرف</h2>
+              {data.doctorStory && data.doctorStory.map((story: string, idx: number) => (
+                <p key={idx} className="text-gray-600 mb-4 leading-relaxed text-lg">{story}</p>
+              ))}
             </motion.div>
           </motion.div>
         </div>
@@ -154,7 +131,6 @@ const About = () => {
               خبرة واسعة ومؤهلات عالمية في طب الأسنان
             </p>
           </motion.div>
-          
           <motion.div 
             variants={container}
             initial="hidden"
@@ -162,7 +138,7 @@ const About = () => {
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
-            {achievements.map((achievement, index) => (
+            {data.achievements && data.achievements.map((achievement, index) => (
               <motion.div 
                 key={index}
                 variants={item}
@@ -172,7 +148,10 @@ const About = () => {
                   <CardContent className="p-8">
                     <div className="flex items-start gap-6">
                       <div className="bg-dental-blue/10 p-4 rounded-full">
-                        {achievement.icon}
+                        {index === 0 && <FaGraduationCap className="text-4xl text-dental-blue" />}
+                        {index === 1 && <FaTrophy className="text-4xl text-dental-blue" />}
+                        {index === 2 && <FaFlask className="text-4xl text-dental-blue" />}
+                        {index === 3 && <FaUserMd className="text-4xl text-dental-blue" />}
                       </div>
                       <div>
                         <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-3">
@@ -210,8 +189,7 @@ const About = () => {
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center lg:text-right">رؤيتنا</h2>
               <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8 text-center lg:text-right">
-                أن نكون الخيار الأول في المملكة العربية السعودية لطب الأسنان التجميلي والعلاجي، 
-                وأن نساهم في رفع مستوى الوعي بأهمية صحة الأسنان في المجتمع.
+                {data.vision}
               </p>
             </motion.div>
             <motion.div
@@ -223,8 +201,7 @@ const About = () => {
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center lg:text-right">رسالتنا</h2>
               <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8 text-center lg:text-right">
-                تقديم خدمات طبية متميزة في مجال طب الأسنان باستخدام أحدث التقنيات والمعدات، 
-                مع التركيز على راحة المريض وتحقيق أفضل النتائج العلاجية والتجميلية.
+                {data.mission}
               </p>
             </motion.div>
           </motion.div>
@@ -246,7 +223,6 @@ const About = () => {
               المبادئ التي نسير عليها في تقديم خدماتنا
             </p>
           </motion.div>
-          
           <motion.div 
             variants={container}
             initial="hidden"
@@ -254,7 +230,7 @@ const About = () => {
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {values.map((value, index) => (
+            {data.values && data.values.map((value, index) => (
               <motion.div 
                 key={index}
                 variants={item}
@@ -263,7 +239,10 @@ const About = () => {
                 <Card className="text-center border-0 shadow-md hover:shadow-xl transition-all duration-300 h-full">
                   <CardContent className="p-8">
                     <div className="bg-dental-blue/10 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      {value.icon}
+                      {index === 0 && <FaStar className="text-3xl text-dental-blue" />}
+                      {index === 1 && <FaShieldAlt className="text-3xl text-dental-blue" />}
+                      {index === 2 && <FaMicroscope className="text-3xl text-dental-blue" />}
+                      {index === 3 && <FaHeart className="text-3xl text-dental-blue" />}
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800 mb-3">
                       {value.title}

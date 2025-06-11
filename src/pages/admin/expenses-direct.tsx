@@ -329,9 +329,9 @@ const DirectExpenses = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100"
+        className="min-h-screen p-2 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100"
       >
-        <div className="max-w-full mx-auto">
+        <div className="max-w-full mx-auto" style={{ width: '100%', maxWidth: '100vw', minWidth: '280px' }}>
           {/* Header Section */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}
@@ -555,7 +555,7 @@ const DirectExpenses = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[600px] sm:min-w-full text-xs sm:text-sm">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="min-w-[120px]">التاريخ</TableHead>
@@ -657,13 +657,13 @@ const DirectExpenses = () => {
 
             {/* Summary Section */}
             <motion.div 
-              className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6"
+              className="border-t border-gray-200 bg-gray-50 p-2 sm:p-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm border border-gray-200">
                   <h3 className="text-sm font-medium text-gray-500">إجمالي المصروفات</h3>
                   <p className="text-2xl font-bold text-gray-800 mt-1">
                     {totalAmount.toLocaleString('ar-EG', {
@@ -672,13 +672,13 @@ const DirectExpenses = () => {
                     })} ج.م
                   </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm border border-gray-200">
                   <h3 className="text-sm font-medium text-gray-500">عدد المصروفات</h3>
                   <p className="text-2xl font-bold text-gray-800 mt-1">
                     {expenses.length}
                   </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white p-2 sm:p-4 rounded-lg shadow-sm border border-gray-200">
                   <h3 className="text-sm font-medium text-gray-500">متوسط المصروف</h3>
                   <p className="text-2xl font-bold text-gray-800 mt-1">
                     {expenses.length > 0 

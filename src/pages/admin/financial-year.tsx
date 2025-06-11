@@ -293,7 +293,8 @@ const FinancialYearPage = () => {
         initial="hidden"
         animate="show"
         variants={staggerContainer()}
-        className="container py-8"
+        className="container py-4 px-1 sm:py-8 sm:px-0"
+        style={{ width: '100%', maxWidth: '100vw', minWidth: '280px' }}
       >
         {/* Add New Financial Year Card */}
         <motion.div variants={fadeIn('up', 0.1)} className="mb-8">
@@ -384,7 +385,7 @@ const FinancialYearPage = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <Table>
+                  <Table className="min-w-[600px] sm:min-w-full text-xs sm:text-sm">
                     <TableHeader>
                       <TableRow>
                         <TableHead>الفترة</TableHead>

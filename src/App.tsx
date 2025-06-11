@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -29,6 +29,11 @@ import ExpensesTypesSection from "./pages/admin/expenses";
 import DatabaseAdmin from "./pages/admin/database";
 import ProfitReportPage from "./pages/admin/profit-report";
 import ServicesReportPage from "./pages/admin/services-report";
+import HomePageAdmin from "./pages/admin/homepage";
+import AbouteUsPage from "./pages/admin/AbouteUsPage";
+import AdminMessages from "./pages/admin/messages";
+import TestimonialsPage from "./pages/admin/TestimonialsPage";
+import GalleryAdminPage from './pages/admin/gallerypage';
 
 const queryClient = new QueryClient();
 
@@ -70,6 +75,14 @@ const App = () => {
               <Route path="/admin/database" element={<AdminRoute><DatabaseAdmin /></AdminRoute>} />
               <Route path="/admin/profit-report" element={<AdminRoute><ProfitReportPage /></AdminRoute>} />
               <Route path="/admin/services-report" element={<AdminRoute><ServicesReportPage /></AdminRoute>} />
+              <Route path="/admin/homepage" element={<AdminRoute><HomePageAdmin /></AdminRoute>} />
+              <Route path="/admin/aboute-us" element={<AdminRoute><AbouteUsPage /></AdminRoute>} />
+              <Route path="/admin/pages/abouteuspage" element={<AdminRoute><AbouteUsPage /></AdminRoute>} />
+              <Route path="/admin/messages" element={<AdminRoute><AdminMessages /></AdminRoute>} />
+              <Route path="/admin/TestimonialsPage" element={<Navigate to="/admin/testimonials" replace />} />
+              <Route path="/admin/testimonials" element={<AdminRoute><TestimonialsPage /></AdminRoute>} />
+              <Route path="/admin/pages/gallerypage" element={<AdminRoute><GalleryAdminPage /></AdminRoute>} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/firebase';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,7 @@ const Contact = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.email || !formData.message) {
@@ -78,20 +78,30 @@ const Contact = () => {
       return;
     }
 
-    console.log('Contact form data:', formData);
-    
-    toast({
-      title: "تم إرسال رسالتك بنجاح",
-      description: "سيتم الرد عليك في أقرب وقت ممكن",
-    });
+    try {
+      await addDoc(collection(db, 'contactMessages'), {
+        ...formData,
+        createdAt: serverTimestamp(),
+      });
+      toast({
+        title: "تم إرسال رسالتك بنجاح",
+        description: "سيتم الرد عليك في أقرب وقت ممكن",
+      });
 
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
-    });
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      });
+    } catch (e) {
+      toast({
+        title: "حدث خطأ",
+        description: "تعذر إرسال الرسالة. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {

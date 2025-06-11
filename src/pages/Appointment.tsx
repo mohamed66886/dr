@@ -236,422 +236,285 @@ const Appointment = () => {
 
 const handleGeneratePDF = async () => {
     setPdfLoading(true);
+    
     // جلب سعر الخدمة المختارة
     const selectedService = services.find(s => s.title === lastData?.service);
     const servicePrice = selectedService ? selectedService.price : clinicInfo.price;
-    // Generate QR code with clinic logo or icon
-    const qrData = `عيادة د. محمد رشاد\nمعلومات الحجز:\nالاسم: ${lastData?.name}\nالجوال: ${lastData?.phone}\nالخدمة: ${lastData?.service}\nالتاريخ: ${lastData?.date}\nالوقت: ${lastData?.time}\nسعر الخدمة: ${servicePrice}`;
+    
+    // Generate QR code مع إضافة لمسة احترافية
+    const qrData = `عيادة ${clinicInfo.name}\nمعلومات الحجز:\nالاسم: ${lastData?.name}\nالجوال: ${lastData?.phone}\nالخدمة: ${lastData?.service}\nالتاريخ: ${lastData?.date}\nالوقت: ${lastData?.time}\nالسعر: ${servicePrice} جنيه\nرقم الحجز: #${Math.floor(1000 + Math.random() * 9000)}`;
     const qrImage = await QRCode.toDataURL(qrData, { 
         width: 150,
         margin: 2,
         color: {
-            dark: '#0e7490', // Dark blue color for QR
-            light: '#f8fafc' // Light background
+            dark: '#1a365d', // أزرق داكن بدل الأسود
+            light: '#ffffff00' // شفاف
         }
     });
 
-    // SVG Icons
+    // SVG Icons بألوان متناسقة
     const icons = {
-        logo: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                <path d="M12 6v6l4 2"/>
-              </svg>`,
-        user: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>`,
-        phone: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>`,
-        tooth: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                <path d="M12 6v6l4 2"/>
-              </svg>`,
-        calendar: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>`,
-        clock: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>`,
-        notes: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>`,
-        clinic: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
-                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-                <line x1="6" y1="1" x2="6" y2="4"/>
-                <line x1="10" y1="1" x2="10" y2="4"/>
-                <line x1="14" y1="1" x2="14" y2="4"/>
-              </svg>`,
-        whatsapp: `<svg viewBox="0 0 24 24" width="24" height="24" fill="#25D366" stroke="#25D366" stroke-width="2">
-                <path d="M3 20l1.65-3.8a9 9 0 1 1 3.4 2.9L3 20z"/>
-                <path d="M9 11a1 1 0 1 0-2 0 1 1 0 0 0 2 0z" fill="#fff"/>
-                <path d="M15 11a1 1 0 1 0-2 0 1 1 0 0 0 2 0z" fill="#fff"/>
-              </svg>`,
-        email: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>`,
-        location: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>`,
-        info: `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="16" x2="12" y2="12"/>
-                <line x1="12" y1="8" x2="12" y2="8"/>
-              </svg>`,
-        facebook: `<svg viewBox="0 0 24 24" width="24" height="24" fill="#3b5998" stroke="#3b5998" stroke-width="2">
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-              </svg>`,
-        instagram: `<svg viewBox="0 0 24 24" width="24" height="24" fill="url(#instagram-gradient)" stroke="#E1306C" stroke-width="2">
-                <defs>
-                  <linearGradient id="instagram-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f09433"/>
-                    <stop offset="25%" stop-color="#e6683c"/>
-                    <stop offset="50%" stop-color="#dc2743"/>
-                    <stop offset="75%" stop-color="#cc2366"/>
-                    <stop offset="100%" stop-color="#bc1888"/>
-                  </linearGradient>
-                </defs>
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                <circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2"/>
-              </svg>`
+        logo: `<svg viewBox="0 0 24 24" width="24" height="24" fill="#1a365d" stroke="#1a365d"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 2"/></svg>`,
+        user: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+        phone: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+        calendar: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+        clock: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+        money: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><path d="M17 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2m2 4h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2z"/></svg>`,
+        clinic: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+        whatsapp: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#25D366" stroke="#25D366"><path d="M3 20l1.65-3.8a9 9 0 1 1 3.4 2.9L3 20z"/><path d="M9 11a1 1 0 1 0-2 0 1 1 0 0 0 2 0z"/><path d="M15 11a1 1 0 1 0-2 0 1 1 0 0 0 2 0z"/></svg>`,
+        location: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#e53e3e" stroke="#e53e3e"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+        email: `<svg viewBox="0 0 24 24" width="20" height="20" fill="#2d3748" stroke="#2d3748"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`
     };
 
-    // Clinic information
-    // const clinicInfo = { ... } // <-- احذف هذا التعريف القديم
-
-    // Create PDF content
+    // إنشاء محتوى PDF مع تصميم احترافي
     const pdfDiv = document.createElement('div');
     pdfDiv.dir = 'rtl';
     pdfDiv.style.fontFamily = 'Cairo, Arial, sans-serif';
-    pdfDiv.style.width = '100%';
-    pdfDiv.style.maxWidth = '800px';
+    pdfDiv.style.width = '210mm';
+    pdfDiv.style.minHeight = '297mm';
+    pdfDiv.style.padding = '0';
     pdfDiv.style.margin = '0 auto';
-    pdfDiv.style.color = '#1e293b';
-    
+    pdfDiv.style.background = '#ffffff';
+    pdfDiv.style.color = '#2d3748';
+    pdfDiv.style.fontSize = '14px';
+    pdfDiv.style.lineHeight = '1.6';
+
     pdfDiv.innerHTML = `
-        <!-- Header with gradient background -->
-        <div style="
-            background: linear-gradient(135deg, #0e7490, #06b6d4);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 12px 12px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        ">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="
-                    background: white;
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #0e7490;
-                ">
+        <!-- Header with Clinic Branding -->
+        <div style="background: linear-gradient(135deg, #1a365d 0%, #2a4365 100%); color: white; padding: 1.5rem; text-align: center; border-bottom: 4px solid #e2e8f0;">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     ${icons.logo}
                 </div>
                 <div>
-                    <h1 style="margin: 0; font-size: 1.5rem; font-weight: 700;">${clinicInfo.name}</h1>
-                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">تأكيد حجز موعد</p>
+                    <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700;">${clinicInfo.name}</h1>
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">تأكيد حجز الموعد الطبي</p>
                 </div>
             </div>
-            
-            <div style="
-                background: white;
-                padding: 8px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            ">
-                <img src="${qrImage}" width="100" height="100" alt="QR Code" />
+            <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.8rem; border-radius: 8px; margin-top: 1rem;">
+                <div style="text-align: right; color: #2d3748;">
+                    <p style="margin: 0; font-weight: 600;">رقم الحجز: #${Math.floor(1000 + Math.random() * 9000)}</p>
+                    <p style="margin: 0; font-size: 0.9rem;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</p>
+                </div>
+                <img src="${qrImage}" width="100" height="100" alt="QR Code" style="border: 1px solid #e2e8f0; border-radius: 4px;"/>
             </div>
         </div>
-        
-        <!-- Main content -->
-        <div style="
-            padding: 2rem;
-            background: #f8fafc;
-            border-radius: 0 0 12px 12px;
-            border: 1px solid #e2e8f0;
-            border-top: none;
-        ">
-            <!-- Appointment details -->
-            <div style="
-                background: white;
-                border-radius: 10px;
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            ">
-                <h2 style="
-                    margin: 0 0 1rem 0;
-                    color: #0e7490;
-                    font-size: 1.3rem;
-                    border-bottom: 2px solid #f1f5f9;
-                    padding-bottom: 0.5rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                ">
-                    <span style="width:24px;height:24px;display:inline-block;">${icons.notes}</span> تفاصيل الحجز
+
+        <!-- Patient Information Section -->
+        <div style="padding: 1.5rem; background: white;">
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <h2 style="margin: 0 0 1rem 0; color: #1a365d; font-size: 1.2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                    <span style="display:inline-block;">${icons.user}</span> معلومات المريض
                 </h2>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <div style="
-                            background: #ecfdf5;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 8px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: #10b981;
-                        ">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="background: #edf2f7; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748;">
                             ${icons.user}
                         </div>
                         <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">الاسم</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${lastData?.name || 'غير محدد'}</p>
+                            <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">الاسم الكامل</p>
+                            <p style="margin: 0; font-weight: 600; color: #1a365d;">${lastData?.name || 'غير محدد'}</p>
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <div style="
-                            background: #eff6ff;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 8px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: #3b82f6;
-                        ">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="background: #edf2f7; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748;">
                             ${icons.phone}
                         </div>
                         <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">الجوال</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${lastData?.phone || 'غير محدد'}</p>
+                            <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">رقم الجوال</p>
+                            <p style="margin: 0; font-weight: 600; color: #1a365d;">${lastData?.phone || 'غير محدد'}</p>
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <div style="
-                            background: #fef2f2;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 8px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: #ef4444;
-                        ">
-                            ${icons.tooth}
-                        </div>
-                        <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">الخدمة</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${lastData?.service || 'غير محدد'}</p>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <div style="
-                            background: #fef9c3;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 8px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: #eab308;
-                        ">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="background: #edf2f7; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748;">
                             ${icons.calendar}
                         </div>
                         <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">التاريخ</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${lastData?.date || 'غير محدد'}</p>
+                            <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">تاريخ الموعد</p>
+                            <p style="margin: 0; font-weight: 600; color: #1a365d;">${lastData?.date || 'غير محدد'}</p>
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <div style="
-                            background: #f3e8ff;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 8px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: #a855f7;
-                        ">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="background: #edf2f7; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748;">
                             ${icons.clock}
                         </div>
                         <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">الوقت</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${lastData?.time || 'غير محدد'}</p>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 8px; align-items: center; grid-column: 1 / -1;">
-                        <div style="
-                            background: #f0fdf4;
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 8px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: #0e7490;
-                        ">
-                            ${icons.info}
-                        </div>
-                        <div>
-                            <p style="margin: 0; font-size: 0.9rem; color: #64748b;">سعر الخدمة</p>
-                            <p style="margin: 0; font-weight: 600; color: #0f172a;">${servicePrice ? servicePrice + ' جنيه' : 'غير محدد'}</p>
+                            <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">وقت الموعد</p>
+                            <p style="margin: 0; font-weight: 600; color: #1a365d;">${lastData?.time || 'غير محدد'}</p>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Clinic information -->
-            <div style="
-                background: white;
-                border-radius: 10px;
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            ">
-                <h2 style="
-                    margin: 0 0 1rem 0;
-                    color: #0e7490;
-                    font-size: 1.3rem;
-                    border-bottom: 2px solid #f1f5f9;
-                    padding-bottom: 0.5rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                ">
-                    <span style="width:24px;height:24px;display:inline-block;">${icons.clinic}</span> معلومات العيادة
+
+            <!-- Appointment Details -->
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <h2 style="margin: 0 0 1rem 0; color: #1a365d; font-size: 1.2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                    <span style="display:inline-block;">${icons.clinic}</span> تفاصيل الموعد
+                </h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="background: #edf2f7; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748;">
+                            ${icons.clinic}
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">نوع الخدمة</p>
+                            <p style="margin: 0; font-weight: 600; color: #1a365d;">${lastData?.service || 'غير محدد'}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="background: #edf2f7; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748;">
+                            ${icons.money}
+                        </div>
+                        <div>
+                            <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">سعر الخدمة</p>
+                            <p style="margin: 0; font-weight: 600; color: #1a365d;">${servicePrice ? servicePrice + ' جنيه مصري' : 'غير محدد'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinic Information -->
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <h2 style="margin: 0 0 1rem 0; color: #1a365d; font-size: 1.2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                    <span style="display:inline-block;">${icons.clinic}</span> معلومات العيادة
                 </h2>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
                     <div>
-                        <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #475569;">اتصل بنا</h3>
+                        <h3 style="margin: 0 0 0.8rem 0; font-size: 1rem; color: #2d3748; display: flex; align-items: center; gap: 6px;">
+                            ${icons.phone} معلومات التواصل
+                        </h3>
                         <ul style="margin: 0; padding: 0; list-style: none;">
-                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                                <span style="width:20px;height:20px;display:inline-block;">${icons.phone}</span> ${clinicInfo.phone}
+                            <li style="margin-bottom: 0.7rem; display: flex; align-items: flex-start; gap: 8px;">
+                                <span style="flex-shrink: 0;">${icons.phone}</span>
+                                <div>
+                                    <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">الهاتف</p>
+                                    <p style="margin: 0; font-weight: 600; color: #1a365d;">${clinicInfo.phone}</p>
+                                </div>
                             </li>
-                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                                <span style="width:20px;height:20px;display:inline-block;">${icons.whatsapp}</span> ${clinicInfo.whatsapp} (واتساب)
+                            <li style="margin-bottom: 0.7rem; display: flex; align-items: flex-start; gap: 8px;">
+                                <span style="flex-shrink: 0;">${icons.whatsapp}</span>
+                                <div>
+                                    <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">واتساب</p>
+                                    <p style="margin: 0; font-weight: 600; color: #1a365d;">${clinicInfo.whatsapp}</p>
+                                </div>
                             </li>
-                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                                <span style="width:20px;height:20px;display:inline-block;">${icons.email}</span> ${clinicInfo.email}
+                            <li style="margin-bottom: 0.7rem; display: flex; align-items: flex-start; gap: 8px;">
+                                <span style="flex-shrink: 0;">${icons.email}</span>
+                                <div>
+                                    <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">البريد الإلكتروني</p>
+                                    <p style="margin: 0; font-weight: 600; color: #1a365d;">${clinicInfo.email}</p>
+                                </div>
                             </li>
-                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
-                                <span style="width:20px;height:20px;display:inline-block;">${icons.location}</span> ${clinicInfo.address}
+                            <li style="display: flex; align-items: flex-start; gap: 8px;">
+                                <span style="flex-shrink: 0;">${icons.location}</span>
+                                <div>
+                                    <p style="margin: 0 0 2px 0; font-size: 0.85rem; color: #4a5568;">العنوان</p>
+                                    <p style="margin: 0; font-weight: 600; color: #1a365d;">${clinicInfo.address}</p>
+                                </div>
                             </li>
                         </ul>
                     </div>
                     
                     <div>
-                        <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #475569;">ساعات العمل</h3>
-                        <ul style="margin: 0; padding: 0; list-style: none;">
-                            ${clinicInfo.workingHours.map(hour => `
-                                <li style="margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
-                                    <span>${hour.day}</span>
-                                    <span style="font-weight: 600; color: #0f172a;">${hour.time}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #475569;">وسائل التواصل الاجتماعي</h3>
-                        <ul style="margin: 0; padding: 0; list-style: none;">
-                            ${clinicInfo.socialMedia.map(social => `
-                                <li style="margin-bottom: 0.5rem;">
-                                    <a href="https://${social.url}" style="
-                                        color: #3b82f6;
-                                        text-decoration: none;
-                                        display: flex;
-                                        align-items: center;
-                                        gap: 8px;
-                                    ">
-                                        <span>${social.name === 'فيسبوك' ? '📘' : '📸'}</span>
-                                        ${social.name}
-                                    </a>
-                                </li>
-                            `).join('')}
-                        </ul>
+                        <h3 style="margin: 0 0 0.8rem 0; font-size: 1rem; color: #2d3748; display: flex; align-items: center; gap: 6px;">
+                            ${icons.clock} ساعات العمل
+                        </h3>
+                        <div style="background: white; border-radius: 6px; padding: 0.8rem; border: 1px solid #e2e8f0;">
+                            <ul style="margin: 0; padding: 0; list-style: none;">
+                                ${clinicInfo.workingHours.map(hour => `
+                                    <li style="margin-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.9rem; color: #4a5568;">${hour.day}</span>
+                                        <span style="font-weight: 600; color: #1a365d; background: #ebf8ff; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${hour.time}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Instructions -->
-            <div style="
-                background: #f0fdf4;
-                border: 1px solid #bbf7d0;
-                border-radius: 8px;
-                padding: 1rem;
-                margin-bottom: 1.5rem;
-            ">
-                <h3 style="
-                    margin: 0 0 0.5rem 0;
-                    color: #166534;
-                    font-size: 1rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                ">
-                    <span style="width:20px;height:20px;display:inline-block;">${icons.info}</span> تعليمات هامة
-                </h3>
-                <ul style="margin: 0; padding: 0 0 0 1rem;">
-                    <li style="margin-bottom: 0.5rem; color: #166534;">يرجى الحضور قبل الموعد بـ 10 دقائق</li>
-                    <li style="margin-bottom: 0.5rem; color: #166534;">إحضار بطاقة الهوية عند الحضور</li>
-                    <li style="margin-bottom: 0.5rem; color: #166534;">في حالة الرغبة في إلغاء الموعد، يرجى التواصل قبل 24 ساعة</li>
-                    <li style="color: #166534;">يمكن استخدام رمز الاستجابة السريعة (QR) للتحقق من الموعد</li>
+
+            <!-- Important Notes -->
+            <div style="background: #fff5f5; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid #fed7d7; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <h2 style="margin: 0 0 1rem 0; color: #c53030; font-size: 1.2rem; border-bottom: 2px solid #fed7d7; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#c53030" stroke="#c53030"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    تعليمات هامة
+                </h2>
+                <ul style="margin: 0; padding: 0 0 0 1.2rem; color: #2d3748;">
+                    <li style="margin-bottom: 0.7rem; font-size: 0.9rem;">يرجى الحضور قبل الموعد بـ 15 دقيقة لتعبئة البيانات المطلوبة</li>
+                     
+                    <li style="margin-bottom: 0.7rem; font-size: 0.9rem;">في حالة الرغبة في إلغاء الموعد، يرجى التواصل قبل 24 ساعة على الأقل</li>
+                    <li style="margin-bottom: 0.7rem; font-size: 0.9rem;">عدم الحضور في الوقت المحدد قد يؤدي إلى إلغاء الموعد</li>
+                    <li style="font-size: 0.9rem;">يمكن استخدام رمز الاستجابة السريعة (QR Code) للتحقق من الموعد عند الوصول</li>
                 </ul>
             </div>
-            
-            <!-- Footer -->
-            <div style="text-align: center; color: #64748b; font-size: 0.8rem;">
-                <p style="margin: 0 0 0.5rem 0;">شكراً لثقتكم في عيادتنا</p>
-                <p style="margin: 0; font-size: 0.7rem;">© ${new Date().getFullYear()} ${clinicInfo.name}. جميع الحقوق محفوظة</p>
+
+            <!-- Payment Summary -->
+            <div style="background: #f0fff4; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid #c6f6d5; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <h2 style="margin: 0 0 1rem 0; color: #2f855a; font-size: 1.2rem; border-bottom: 2px solid #c6f6d5; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#2f855a" stroke="#2f855a"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/></svg>
+                    ملخص الدفع
+                </h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.8rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div>
+                        <p style="margin: 0 0 4px 0; font-size: 0.9rem; color: #4a5568;">سعر الخدمة</p>
+                        <p style="margin: 0; font-weight: 600; color: #2f855a; font-size: 1.1rem;">${servicePrice ? servicePrice + ' جنيه مصري' : 'غير محدد'}</p>
+                    </div>
+                    <div style="text-align: left;">
+                        <p style="margin: 0 0 4px 0; font-size: 0.9rem; color: #4a5568;">طريقة الدفع</p>
+                        <p style="margin: 0; font-weight: 600; color: #2d3748;">دفع عند الوصول</p>
+                    </div>
+                </div>
+                <p style="margin: 0.8rem 0 0 0; font-size: 0.8rem; color: #718096; text-align: center;">
+                    ملاحظة: السعر لا يشمل أي إجراءات إضافية قد تتطلبها حالتك خلال الزيارة
+                </p>
             </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #1a365d; color: white; padding: 1.2rem; text-align: center; border-top: 4px solid #e2e8f0;">
+            <div style="display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem;">
+                ${clinicInfo.socialMedia.map(social => `
+                    <a href="https://${social.url}" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+                        ${social.name === 'فيسبوك' ? 
+                            '<svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>' : 
+                            '<svg viewBox="0 0 24 24" width="18" height="18" fill="white"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="5" fill="none" stroke="white"/></svg>'
+                        }
+                        ${social.name}
+                    </a>
+                `).join('')}
+            </div>
+            <p style="margin: 0; font-size: 0.85rem; opacity: 0.9;">شكراً لثقتكم في خدماتنا الطبية</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; opacity: 0.8;">© ${new Date().getFullYear()} ${clinicInfo.name}. جميع الحقوق محفوظة</p>
         </div>
     `;
 
     document.body.appendChild(pdfDiv);
-    
     try {
         await html2pdf().set({
             margin: 0,
-            filename: `حجز_موعد_${lastData?.name || 'مريض'}.pdf`,
+            filename: `حجز_موعد_${lastData?.name || 'مريض'}_${new Date().toISOString().slice(0,10)}.pdf`,
             html2canvas: { 
-                scale: 2,
+                scale: 3, // دقة أعلى
                 logging: false,
                 useCORS: true,
-                allowTaint: true
+                allowTaint: true,
+                windowWidth: 793,
+                windowHeight: 1122
             },
             jsPDF: { 
                 orientation: 'portrait', 
                 unit: 'mm', 
                 format: 'a4',
                 hotfixes: ['px_scaling']
-            }
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         }).from(pdfDiv).save();
     } catch (error) {
         console.error('Error generating PDF:', error);
@@ -820,7 +683,7 @@ const handleGeneratePDF = async () => {
             transition={{ delay: 0.4 }}
             className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed"
           >
-            احجز موعدك الآن واحصل على استشارة مجانية مع د. محمد رشاد
+            احجز موعدك الآن واحصل على استشارة مجانية مع د. معاذ أشرف
           </motion.p>
         </div>
       </motion.section>
